@@ -2,15 +2,67 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Деление — показывать только до 3 знаков после запятой</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Гибкое деление — тёмная тема и история</title>
     <style>
+        /* ---------- CSS Variables (светлая тема по умолчанию) ---------- */
+        :root {
+            --bg-body: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-light: #e5e7eb;
+            --border-input: #e2e8f0;
+            --input-bg: #fafcff;
+            --input-focus: #3b82f6;
+            --result-bg: #f9fafb;
+            --result-border: #edf2f7;
+            --quotient-bg: #eef2ff;
+            --quotient-text: #1e40af;
+            --rejected-bg: #fee2e2;
+            --rejected-text: #b91c1c;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --btn-secondary: #e2e8f0;
+            --btn-secondary-text: #1e293b;
+            --danger-bg: #fee2e2;
+            --danger-text: #b91c1c;
+            --history-item-hover: #f1f5f9;
+            --shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+        }
+
+        body.dark {
+            --bg-body: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-light: #334155;
+            --border-input: #475569;
+            --input-bg: #0f172a;
+            --input-focus: #60a5fa;
+            --result-bg: #0f172a;
+            --result-border: #334155;
+            --quotient-bg: #1e293b;
+            --quotient-text: #93c5fd;
+            --rejected-bg: #451a1a;
+            --rejected-text: #f87171;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --btn-secondary: #334155;
+            --btn-secondary-text: #e2e8f0;
+            --danger-bg: #451a1a;
+            --danger-text: #f87171;
+            --history-item-hover: #334155;
+            --shadow: 0 20px 35px -10px rgba(0,0,0,0.4);
+        }
+
         * {
             box-sizing: border-box;
+            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s;
         }
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: #f3f4f6;
+            background: var(--bg-body);
             margin: 0;
             min-height: 100vh;
             display: flex;
@@ -19,60 +71,84 @@
             padding: 20px;
         }
         .card {
-            max-width: 700px;
+            max-width: 900px;
             width: 100%;
-            background: white;
+            background: var(--card-bg);
             border-radius: 28px;
-            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             padding: 28px 24px 36px;
+        }
+        /* Header with theme toggle */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
         }
         h1 {
             font-size: 1.8rem;
             font-weight: 600;
-            margin: 0 0 8px 0;
-            color: #111827;
+            margin: 0;
+            color: var(--text-primary);
+        }
+        .theme-toggle {
+            background: var(--btn-secondary);
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            border-radius: 60px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s;
+            color: var(--btn-secondary-text);
+        }
+        .theme-toggle:hover {
+            transform: scale(0.95);
         }
         .sub {
-            color: #4b5563;
-            border-left: 4px solid #3b82f6;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--input-focus);
             padding-left: 14px;
-            margin: 0 0 24px 0;
+            margin: 12px 0 24px 0;
             font-size: 0.95rem;
         }
         label {
             font-weight: 500;
             display: block;
             margin-bottom: 6px;
-            color: #1f2937;
+            color: var(--text-primary);
         }
         .input-field {
             width: 100%;
             padding: 12px 16px;
             font-size: 1rem;
-            border: 1.5px solid #e2e8f0;
+            border: 1.5px solid var(--border-input);
             border-radius: 18px;
-            background: #fafcff;
+            background: var(--input-bg);
             font-family: monospace;
+            color: var(--text-primary);
         }
         .input-field:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: var(--input-focus);
             box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
         }
         .divider {
             margin: 24px 0 20px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--border-light);
         }
-        .divisors-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            margin: 20px 0 28px;
+        .divisors-container {
+            margin: 20px 0 20px;
         }
         .divisor-item {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
         }
         .divisor-item label {
@@ -83,8 +159,34 @@
             flex: 1;
             min-width: 150px;
         }
-        button {
-            background: #3b82f6;
+        .buttons-row {
+            display: flex;
+            gap: 12px;
+            margin: 10px 0 15px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: var(--btn-secondary);
+            color: var(--btn-secondary-text);
+            border: none;
+            padding: 10px 18px;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            flex: 1;
+            text-align: center;
+        }
+        .action-btn.primary {
+            background: var(--btn-primary);
+            color: white;
+        }
+        .action-btn.danger {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+        .calc-btn {
+            background: var(--btn-primary);
             color: white;
             border: none;
             padding: 14px 24px;
@@ -93,75 +195,90 @@
             border-radius: 40px;
             width: 100%;
             cursor: pointer;
-            transition: 0.1s;
+            margin-top: 12px;
         }
-        button:hover {
-            background: #2563eb;
-            transform: scale(0.98);
-        }
-        .results {
+        .results, .history {
             margin-top: 32px;
-            background: #f9fafb;
+            background: var(--result-bg);
             border-radius: 24px;
             overflow: hidden;
         }
-        .result-header {
+        .result-header, .history-header {
             font-weight: 600;
             padding: 12px 20px;
-            border-bottom: 1px solid #e5e7eb;
-            color: #1e293b;
+            border-bottom: 1px solid var(--result-border);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .result-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 12px 20px;
-            border-bottom: 1px solid #edf2f7;
+            border-bottom: 1px solid var(--result-border);
             font-family: monospace;
             flex-wrap: wrap;
             gap: 8px;
         }
-        .result-row:last-child {
-            border-bottom: none;
-        }
-        .divisor-label {
-            font-weight: 500;
-            color: #334155;
-        }
         .quotient {
             font-weight: 600;
-            background: #eef2ff;
+            background: var(--quotient-bg);
             padding: 4px 12px;
             border-radius: 36px;
-            color: #1e40af;
+            color: var(--quotient-text);
         }
         .rejected {
-            background: #fee2e2;
-            color: #b91c1c;
+            background: var(--rejected-bg);
+            color: var(--rejected-text);
             font-weight: 500;
             padding: 4px 12px;
             border-radius: 36px;
         }
-        .error-msg {
-            color: #dc2626;
-            background: #fee2e2;
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .history-item {
             padding: 12px 20px;
-            border-radius: 20px;
-            margin: 16px;
+            border-bottom: 1px solid var(--result-border);
+            cursor: pointer;
+            transition: background 0.1s;
+            color: var(--text-primary);
+        }
+        .history-item:hover {
+            background: var(--history-item-hover);
+        }
+        .history-item .history-dividend {
+            font-weight: 700;
+        }
+        .history-item .history-details {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .clear-history {
+            background: transparent;
+            border: none;
+            color: var(--danger-text);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
         .info-note {
             font-size: 0.75rem;
-            color: #6c757d;
+            color: var(--text-secondary);
             text-align: center;
             margin-top: 24px;
             padding-top: 18px;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid var(--border-light);
         }
         footer {
             font-size: 0.7rem;
             text-align: center;
             margin-top: 20px;
-            color: #6c757d;
+            color: var(--text-secondary);
         }
         @media (max-width: 550px) {
             .card { padding: 20px 16px; }
@@ -172,135 +289,304 @@
 </head>
 <body>
 <div class="card">
-    <h1>🔍 Деление с фильтром знаков</h1>
-    <div class="sub">Показываются <strong>только те результаты</strong>, у которых после запятой <strong>не более 3 цифр</strong>. Если цифр больше — результат не показывается.</div>
+    <div class="header">
+        <h1>➕➖ Гибкое деление</h1>
+        <button class="theme-toggle" id="themeToggle" aria-label="Тёмная тема">🌙</button>
+    </div>
+    <div class="sub">Показываются только результаты с <strong>≤ 3 цифрами после запятой</strong> (без округления). Добавляйте/удаляйте делители, сохраняйте историю.</div>
 
     <label for="dividend">Делимое</label>
-    <input type="number" id="dividend" class="input-field" placeholder="Например: 10" step="any" value="10">
+    <input type="number" id="dividend" class="input-field" placeholder="Число" step="any" value="100">
 
     <div class="divider"></div>
-    <div class="divisors-grid">
-        <div class="divisor-item"><label>Делитель 1</label><input type="number" id="div1" class="input-field" step="any" value="3"></div>
-        <div class="divisor-item"><label>Делитель 2</label><input type="number" id="div2" class="input-field" step="any" value="4"></div>
-        <div class="divisor-item"><label>Делитель 3</label><input type="number" id="div3" class="input-field" step="any" value="5"></div>
-        <div class="divisor-item"><label>Делитель 4</label><input type="number" id="div4" class="input-field" step="any" value="8"></div>
-        <div class="divisor-item"><label>Делитель 5</label><input type="number" id="div5" class="input-field" step="any" value="2"></div>
-    </div>
+    <div class="divisors-container" id="divisorsContainer"></div>
 
-    <button id="calcBtn">🧮 Вычислить</button>
+    <div class="buttons-row">
+        <button id="addDivisorBtn" class="action-btn">➕ Добавить делитель</button>
+        <button id="removeDivisorBtn" class="action-btn danger">➖ Удалить последний</button>
+    </div>
+    <button id="calcBtn" class="calc-btn">🧮 Вычислить результаты</button>
 
     <div class="results" id="resultsArea">
         <div class="result-header">📊 Результаты</div>
-        <div style="padding: 20px; text-align: center; color: #6c757d;">Нажмите «Вычислить»</div>
+        <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нажмите «Вычислить»</div>
+    </div>
+
+    <div class="history" id="historyArea">
+        <div class="history-header">
+            📜 История вычислений
+            <button id="clearHistoryBtn" class="clear-history">Очистить всё</button>
+        </div>
+        <div id="historyList" class="history-list">
+            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>
+        </div>
     </div>
     <div class="info-note">
-        ⚡ Пример: 10 ÷ 3 = 3.333333... → ❌ (4+ знаков)<br>
-        10 ÷ 4 = 2.5 → ✅ показывается 2.5<br>
-        1 ÷ 8 = 0.125 → ✅ (3 знака)<br>
-        2 ÷ 1 = 2 → ✅ (0 знаков)
+        ⚡ Клик по записи истории — восстановит делимое и делители, автоматически пересчитает.<br>
+        🌓 Переключатель темы сохраняется в памяти браузера.
     </div>
-    <footer>проверка дробной части • максимум 3 цифры после запятой</footer>
+    <footer>динамические делители • проверка до 3 знаков • история в localStorage</footer>
 </div>
 
 <script>
-    // Проверяет количество знаков после запятой у числа (без округления)
-    // Возвращает { ok: true/false, value: строка для отображения }
-    function checkDecimalPlaces(num, maxPlaces = 3) {
-        if (isNaN(num)) return { ok: false, value: '❌ не число' };
-        
+    // ---------- Утилиты для работы с дробной частью ----------
+    function getDecimalPlacesCount(num) {
+        if (isNaN(num)) return -1;
         let absNum = Math.abs(num);
         let integerPart = Math.floor(absNum);
         let fractional = absNum - integerPart;
-        
-        // Если дробная часть 0 (в пределах погрешности)
-        if (Math.abs(fractional) < 1e-12) {
-            return { ok: true, value: num.toString() };
+        if (Math.abs(fractional) < 1e-12) return 0;
+        let str = fractional.toString();
+        if (str.startsWith('0.')) str = str.substring(2);
+        else str = str.replace(/^0\./, '');
+        if (str.includes('e')) return 10;
+        return str.length;
+    }
+
+    function formatNumberSimple(num) {
+        let str = num.toString();
+        if (str.includes('.')) str = str.replace(/\.?0+$/, '');
+        return str;
+    }
+
+    // ---------- Управление делителями ----------
+    let currentDivisorIds = [];
+    const container = document.getElementById('divisorsContainer');
+    const addBtn = document.getElementById('addDivisorBtn');
+    const removeBtn = document.getElementById('removeDivisorBtn');
+    const calcBtn = document.getElementById('calcBtn');
+    const dividendInput = document.getElementById('dividend');
+    const resultsDiv = document.getElementById('resultsArea');
+
+    function refreshDivisorLabels() {
+        const items = container.querySelectorAll('.divisor-item');
+        items.forEach((item, idx) => {
+            const label = item.querySelector('label');
+            if (label) label.innerHTML = `🔹 Делитель ${idx + 1}`;
+        });
+    }
+
+    function addDivisor(value = 2) {
+        const currentCount = container.children.length;
+        const newIndex = currentCount + 1;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'divisor-item';
+        const id = `div_${Date.now()}_${newIndex}`;
+        wrapper.setAttribute('data-id', id);
+        wrapper.innerHTML = `
+            <label>🔹 Делитель ${newIndex}</label>
+            <input type="number" class="input-field divisor-input" step="any" value="${value}" placeholder="Число">
+        `;
+        container.appendChild(wrapper);
+        currentDivisorIds.push(id);
+        refreshDivisorLabels();
+    }
+
+    function removeLastDivisor() {
+        if (container.children.length <= 1) {
+            alert('Должен быть хотя бы один делитель');
+            return;
         }
-        
-        // Преобразуем дробную часть в строку, убирая "0."
-        let fractionalStr = fractional.toString();
-        if (fractionalStr.startsWith('0.')) {
-            fractionalStr = fractionalStr.substring(2);
-        } else {
-            fractionalStr = fractionalStr.replace(/^0\./, '');
-        }
-        
-        let decimalPlaces = fractionalStr.length;
-        
-        if (decimalPlaces > maxPlaces) {
-            return { ok: false, value: `❌ больше ${maxPlaces} знаков (${decimalPlaces})` };
-        } else {
-            // Форматируем число: убираем лишние конечные нули
-            let formatted = num.toString();
-            if (formatted.includes('.')) {
-                formatted = formatted.replace(/\.?0+$/, '');
-            }
-            return { ok: true, value: formatted };
+        const lastItem = container.lastElementChild;
+        if (lastItem) {
+            const id = lastItem.getAttribute('data-id');
+            currentDivisorIds = currentDivisorIds.filter(pid => pid !== id);
+            container.removeChild(lastItem);
+            refreshDivisorLabels();
         }
     }
 
-    function calculate() {
-        const dividend = parseFloat(document.getElementById('dividend').value);
-        if (isNaN(dividend)) {
-            showError('Введите корректное число в поле «Делимое».');
-            return;
-        }
-
-        const divIds = ['div1', 'div2', 'div3', 'div4', 'div5'];
-        let divisors = [];
-        for (let i = 0; i < divIds.length; i++) {
-            const val = parseFloat(document.getElementById(divIds[i]).value);
-            if (isNaN(val)) {
-                showError(`Ошибка: делитель ${i+1} не является числом.`);
-                return;
-            }
+    function getAllDivisors() {
+        const inputs = container.querySelectorAll('.divisor-input');
+        const divisors = [];
+        for (let i = 0; i < inputs.length; i++) {
+            let val = parseFloat(inputs[i].value);
+            if (isNaN(val)) return { valid: false, errorIndex: i, divisors: [] };
             divisors.push(val);
         }
+        return { valid: true, divisors, errorIndex: -1 };
+    }
+
+    function setDivisorsFromArray(divisorsArray) {
+        // Очищаем и создаём нужное количество полей
+        container.innerHTML = '';
+        currentDivisorIds = [];
+        for (let i = 0; i < divisorsArray.length; i++) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'divisor-item';
+            const id = `div_restore_${Date.now()}_${i}`;
+            wrapper.setAttribute('data-id', id);
+            wrapper.innerHTML = `
+                <label>🔹 Делитель ${i+1}</label>
+                <input type="number" class="input-field divisor-input" step="any" value="${divisorsArray[i]}" placeholder="Число">
+            `;
+            container.appendChild(wrapper);
+            currentDivisorIds.push(id);
+        }
+        refreshDivisorLabels();
+    }
+
+    // ---------- Вычисление и отображение результатов ----------
+    function calculateAndReturnResults() {
+        const dividend = parseFloat(dividendInput.value);
+        if (isNaN(dividend)) return { error: 'Введите корректное делимое', resultsHtml: null, rawResults: null };
+        const divisorsResult = getAllDivisors();
+        if (!divisorsResult.valid) return { error: `Ошибка: делитель ${divisorsResult.errorIndex + 1} не число`, resultsHtml: null, rawResults: null };
+        const divisors = divisorsResult.divisors;
+        if (divisors.length === 0) return { error: 'Добавьте хотя бы один делитель', resultsHtml: null, rawResults: null };
 
         let resultsHtml = `<div class="result-header">📊 Результаты (${dividend} ÷ ...)</div>`;
-        
+        const rawResults = [];
         for (let i = 0; i < divisors.length; i++) {
             const divisor = divisors[i];
             if (divisor === 0) {
-                resultsHtml += `
-                    <div class="result-row">
-                        <span class="divisor-label">Делитель ${i+1} = 0</span>
-                        <span class="rejected">⚠️ деление на ноль</span>
-                    </div>
-                `;
+                resultsHtml += `<div class="result-row"><span class="divisor-label">Делитель ${i+1} = 0</span><span class="rejected">⚠️ деление на ноль</span></div>`;
+                rawResults.push({ divisor, quotient: null, decimalCount: null, status: 'zero' });
                 continue;
             }
             const quotient = dividend / divisor;
-            const check = checkDecimalPlaces(quotient, 3);
-            if (check.ok) {
-                resultsHtml += `
-                    <div class="result-row">
-                        <span class="divisor-label">${divisor}</span>
-                        <span class="quotient">${check.value}</span>
-                    </div>
-                `;
+            const decimalCount = getDecimalPlacesCount(quotient);
+            if (decimalCount <= 3 && decimalCount >= 0) {
+                const formatted = formatNumberSimple(quotient);
+                resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="quotient">${formatted}</span></div>`;
+                rawResults.push({ divisor, quotient: formatted, decimalCount, status: 'ok' });
             } else {
-                resultsHtml += `
-                    <div class="result-row">
-                        <span class="divisor-label">${divisor}</span>
-                        <span class="rejected">${check.value}</span>
-                    </div>
-                `;
+                resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="rejected">❌ больше 3 знаков (${decimalCount})</span></div>`;
+                rawResults.push({ divisor, quotient: null, decimalCount, status: 'too_many' });
             }
         }
-        
-        document.getElementById('resultsArea').innerHTML = resultsHtml;
+        return { error: null, resultsHtml, rawResults, dividend, divisors };
     }
 
-    function showError(msg) {
-        document.getElementById('resultsArea').innerHTML = `<div class="error-msg">⚠️ ${msg}</div>`;
+    function calculateAndDisplay() {
+        const res = calculateAndReturnResults();
+        if (res.error) {
+            resultsDiv.innerHTML = `<div class="error-msg" style="color:var(--danger-text);background:var(--rejected-bg);padding:12px;margin:16px;">⚠️ ${res.error}</div>`;
+            return;
+        }
+        resultsDiv.innerHTML = res.resultsHtml;
+        // Сохраняем в историю
+        if (res.rawResults) {
+            saveToHistory(res.dividend, res.divisors, res.rawResults);
+        }
     }
 
-    document.getElementById('calcBtn').addEventListener('click', calculate);
-    const inputs = document.querySelectorAll('input');
-    inputs.forEach(input => {
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') calculate(); });
-    });
+    // ---------- История (localStorage) ----------
+    let history = []; // массив объектов: { dividend, divisorsArray, resultsArray, timestamp }
+
+    function loadHistoryFromStorage() {
+        const stored = localStorage.getItem('divisionHistory');
+        if (stored) {
+            try {
+                history = JSON.parse(stored);
+                if (!Array.isArray(history)) history = [];
+            } catch(e) { history = []; }
+        } else {
+            history = [];
+        }
+        renderHistory();
+    }
+
+    function saveHistoryToStorage() {
+        localStorage.setItem('divisionHistory', JSON.stringify(history));
+    }
+
+    function saveToHistory(dividend, divisors, results) {
+        // results: массив объектов с полями divisor, quotient, decimalCount, status
+        const historyItem = {
+            dividend: dividend,
+            divisorsArray: [...divisors],
+            resultsArray: results.map(r => ({ divisor: r.divisor, status: r.status, quotient: r.quotient })),
+            timestamp: Date.now()
+        };
+        history.unshift(historyItem); // новые сверху
+        // Ограничим 20 записями
+        if (history.length > 20) history = history.slice(0, 20);
+        saveHistoryToStorage();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const historyContainer = document.getElementById('historyList');
+        if (!historyContainer) return;
+        if (history.length === 0) {
+            historyContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>';
+            return;
+        }
+        let html = '';
+        for (let i = 0; i < history.length; i++) {
+            const item = history[i];
+            const date = new Date(item.timestamp).toLocaleString();
+            const shortDivisors = item.divisorsArray.join(', ');
+            html += `
+                <div class="history-item" data-history-index="${i}">
+                    <div class="history-dividend">${item.dividend} ÷ [${shortDivisors}]</div>
+                    <div class="history-details">${date} • ${item.resultsArray.filter(r => r.status === 'ok').length} успешных</div>
+                </div>
+            `;
+        }
+        historyContainer.innerHTML = html;
+        // добавить обработчики
+        document.querySelectorAll('.history-item').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const idx = el.getAttribute('data-history-index');
+                if (idx !== null) restoreFromHistory(parseInt(idx));
+            });
+        });
+    }
+
+    function restoreFromHistory(index) {
+        const item = history[index];
+        if (!item) return;
+        dividendInput.value = item.dividend;
+        setDivisorsFromArray(item.divisorsArray);
+        // После восстановления автоматически пересчитываем
+        calculateAndDisplay();
+    }
+
+    function clearHistory() {
+        history = [];
+        saveHistoryToStorage();
+        renderHistory();
+    }
+
+    // ---------- Тёмная тема (localStorage) ----------
+    const themeToggle = document.getElementById('themeToggle');
+    function setTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark');
+            themeToggle.innerHTML = '☀️';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark');
+            themeToggle.innerHTML = '🌙';
+            localStorage.setItem('theme', 'light');
+        }
+    }
+    function toggleTheme() {
+        if (document.body.classList.contains('dark')) setTheme('light');
+        else setTheme('dark');
+    }
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') setTheme('dark');
+    else setTheme('light');
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // ---------- Инициализация по умолчанию: 5 делителей со значениями 2,3,4,5,8 ----------
+    function initDefaultDivisors() {
+        const defaults = [2,3,4,5,8];
+        setDivisorsFromArray(defaults);
+    }
+
+    // События
+    addBtn.addEventListener('click', () => addDivisor(2));
+    removeBtn.addEventListener('click', removeLastDivisor);
+    calcBtn.addEventListener('click', calculateAndDisplay);
+    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+    dividendInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') calculateAndDisplay(); });
+
+    initDefaultDivisors();
+    loadHistoryFromStorage();
 </script>
 </body>
 </html>
