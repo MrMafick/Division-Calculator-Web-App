@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Калькулятор деления — большая клавиатура</title>
+    <title>Калькулятор деления — быстрая клавиатура</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,12 +17,10 @@
             --border: #dce5ec;
             --input-bg: #ffffff;
             --primary: #2c7da0;
-            --primary-dark: #1f5e7a;
             --danger: #e07a5f;
             --danger-bg: #fde9e5;
             --panel-bg: #f8fafc;
             --overlay-bg: rgba(0,0,0,0.4);
-            --btn-text: #1e2a3a;
             --keypad-bg: #f1f5f9;
             --key-btn: #ffffff;
         }
@@ -34,12 +32,10 @@
             --border: #334155;
             --input-bg: #0f172a;
             --primary: #60a5fa;
-            --primary-dark: #3b82f6;
             --danger: #f87171;
             --danger-bg: #451a1a;
             --panel-bg: #0f172a;
             --overlay-bg: rgba(0,0,0,0.7);
-            --btn-text: #f1f5f9;
             --keypad-bg: #1e293b;
             --key-btn: #334155;
         }
@@ -52,7 +48,6 @@
             display: flex;
             flex-direction: column;
         }
-        /* Кнопка меню */
         .menu-btn {
             position: fixed;
             top: 16px;
@@ -173,7 +168,6 @@
             color: var(--text);
             font-family: monospace;
             text-align: right;
-            cursor: pointer;
         }
         .divisor-row input:focus { outline: none; }
         .remove-div {
@@ -200,7 +194,7 @@
             cursor: pointer;
             flex: 1;
             text-align: center;
-            color: var(--btn-text);
+            color: var(--text);
         }
         .btn-sm.primary {
             background: var(--primary);
@@ -242,11 +236,10 @@
             cursor: pointer;
             font-weight: 500;
         }
-        /* Основной контент */
         .main-content {
             max-width: 800px;
             margin: 0 auto;
-            padding: 80px 20px 180px; /* увеличен нижний отступ для высокой клавиатуры */
+            padding: 80px 20px 180px;
             width: 100%;
         }
         .dividend-area {
@@ -315,7 +308,6 @@
             color: var(--danger);
             font-size: 1.1rem;
         }
-        /* Увеличенная клавиатура — больше и выше */
         .keypad {
             position: fixed;
             bottom: 0;
@@ -329,6 +321,10 @@
             gap: 14px;
             z-index: 100;
             box-shadow: 0 -4px 16px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+        .keypad.hidden {
+            transform: translateY(100%);
         }
         .key-btn {
             background: var(--key-btn);
@@ -342,6 +338,8 @@
             color: var(--text);
             transition: 0.05s linear;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            touch-action: manipulation;  /* запрещает двойной тап для зума */
+            user-select: none;
         }
         .key-btn:active {
             transform: scale(0.96);
@@ -372,6 +370,7 @@
             z-index: 101;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             color: var(--text);
+            touch-action: manipulation;
         }
         @media (max-width: 550px) {
             .main-content { padding: 70px 16px 200px; }
@@ -380,12 +379,8 @@
             .result-item { padding: 12px 16px; }
             .divisor-val { font-size: 1.2rem; }
             .result-badge { font-size: 1.2rem; padding: 6px 16px; }
-            /* Увеличиваем кнопки на телефонах */
             .keypad { padding: 16px 16px 24px; gap: 12px; }
             .key-btn { padding: 18px 0; font-size: 1.6rem; border-radius: 48px; }
-        }
-        @media (max-width: 400px) {
-            .key-btn { padding: 14px 0; font-size: 1.4rem; }
         }
     </style>
 </head>
@@ -429,37 +424,31 @@
     </div>
     <div class="theme-fab" id="themeToggle">🌙</div>
 
-    <!-- Увеличенная виртуальная клавиатура -->
     <div class="keypad" id="keypad">
         <div class="key-btn" data-key="7">7</div>
         <div class="key-btn" data-key="8">8</div>
         <div class="key-btn" data-key="9">9</div>
         <div class="key-btn special" data-key="C">C</div>
-        
         <div class="key-btn" data-key="4">4</div>
         <div class="key-btn" data-key="5">5</div>
         <div class="key-btn" data-key="6">6</div>
         <div class="key-btn special" data-key="⌫">⌫</div>
-        
         <div class="key-btn" data-key="1">1</div>
         <div class="key-btn" data-key="2">2</div>
         <div class="key-btn" data-key="3">3</div>
         <div class="key-btn" data-key="-">±</div>
-        
         <div class="key-btn double" data-key="0">0</div>
         <div class="key-btn" data-key=".">.</div>
         <div class="key-btn special" data-key="Enter">↵</div>
     </div>
 
 <script>
-    // ---------- Вспомогательные функции ----------
+    // ---- вспомогательные функции ----
     function getDecimalCount(num) {
         if (isNaN(num)) return -1;
-        let abs = Math.abs(num);
-        let frac = abs - Math.floor(abs);
+        let frac = Math.abs(num) - Math.floor(Math.abs(num));
         if (frac < 1e-12) return 0;
-        let str = frac.toString();
-        str = str.replace(/^0\./, '');
+        let str = frac.toString().replace(/^0\./, '');
         if (str.includes('e')) return 10;
         return str.length;
     }
@@ -469,7 +458,7 @@
         return s;
     }
     
-    // ---------- DOM ----------
+    // ---- DOM ----
     const dividendInput = document.getElementById('dividend');
     const divisorsContainer = document.getElementById('divisorsList');
     const addBtn = document.getElementById('addDivBtn');
@@ -481,20 +470,21 @@
     const overlay = document.getElementById('overlay');
     const sidePanel = document.getElementById('sidePanel');
     const closePanelBtn = document.getElementById('closePanelBtn');
+    const keypadDiv = document.getElementById('keypad');
     
     let divisorValues = [18, 16, 13, 11];
     let activeField = null;
+    let lastDividendValue = '';
+    let lastResultsHtml = '';
+    let updateTimeout = null;
     
     function setActiveField(field) {
-        document.querySelectorAll('.editable-field').forEach(f => f.classList.remove('active-field'));
-        if (field) {
-            field.classList.add('active-field');
-            activeField = field;
-        } else {
-            activeField = null;
-        }
+        if (activeField) activeField.classList.remove('active-field');
+        activeField = field;
+        if (field) field.classList.add('active-field');
     }
     
+    // ---- рендер делителей (обычные поля, без readonly) ----
     function renderDivisors() {
         divisorsContainer.innerHTML = '';
         divisorValues.forEach((val, idx) => {
@@ -502,13 +492,15 @@
             row.className = 'divisor-row';
             row.innerHTML = `
                 <span class="label">Делитель ${idx+1}</span>
-                <input type="text" class="editable-field divisor-input" value="${val}" readonly inputmode="none">
+                <input type="number" class="divisor-input" value="${val}" step="any" placeholder="Число">
                 <button class="remove-div" data-index="${idx}">✕</button>
             `;
             const input = row.querySelector('.divisor-input');
-            input.addEventListener('click', (e) => {
-                e.stopPropagation();
-                setActiveField(input);
+            input.addEventListener('input', () => {
+                let newVal = parseFloat(input.value);
+                if (!isNaN(newVal)) divisorValues[idx] = newVal;
+                else divisorValues[idx] = 0;
+                scheduleUpdate();
             });
             const delBtn = row.querySelector('.remove-div');
             delBtn.addEventListener('click', (e) => {
@@ -519,7 +511,7 @@
                 }
                 divisorValues.splice(idx, 1);
                 renderDivisors();
-                autoCalculate();
+                scheduleUpdate();
             });
             divisorsContainer.appendChild(row);
         });
@@ -528,9 +520,8 @@
     function addDivisor() {
         divisorValues.push(2);
         renderDivisors();
-        autoCalculate();
+        scheduleUpdate();
     }
-    
     function removeLastDivisor() {
         if (divisorValues.length <= 1) {
             alert('Должен быть хотя бы один делитель');
@@ -538,195 +529,154 @@
         }
         divisorValues.pop();
         renderDivisors();
-        autoCalculate();
+        scheduleUpdate();
     }
     
-    function updateDivisorsFromInputs() {
-        const inputs = document.querySelectorAll('.divisor-input');
-        for (let i = 0; i < inputs.length; i++) {
-            let val = parseFloat(inputs[i].value);
-            if (!isNaN(val) && i < divisorValues.length) {
-                divisorValues[i] = val;
-            }
-        }
-    }
-    
-    function computeAndRender() {
-        updateDivisorsFromInputs();
+    // ---- вычисление и обновление результатов с кешем и debounce ----
+    function computeResults() {
         const dividend = parseFloat(dividendInput.value);
-        if (isNaN(dividend)) {
-            resultsContainer.innerHTML = '<div style="padding:28px;text-align:center;font-size:1rem;color:var(--danger);">⚠️ Введите число</div>';
-            return { error: true };
-        }
-        let valid = true;
-        const divs = [];
+        if (isNaN(dividend)) return null;
+        let divs = [];
         for (let v of divisorValues) {
-            if (isNaN(v)) { valid = false; break; }
+            if (isNaN(v)) return null;
             divs.push(v);
         }
-        if (!valid) {
-            resultsContainer.innerHTML = '<div style="padding:28px;text-align:center;font-size:1rem;color:var(--danger);">⚠️ Проверьте делители</div>';
-            return { error: true };
-        }
-        let html = '';
-        const raw = [];
+        const items = [];
         for (let d of divs) {
             if (d === 0) {
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
-                raw.push({ divisor: d, status: 'zero' });
+                items.push({ divisor: d, status: 'zero', text: '⚠️ деление на 0' });
                 continue;
             }
             const q = dividend / d;
             const dec = getDecimalCount(q);
             if (dec <= 3) {
-                const formatted = formatNumber(q);
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge">${formatted}</span></div>`;
-                raw.push({ divisor: d, status: 'ok', value: formatted });
+                items.push({ divisor: d, status: 'ok', text: formatNumber(q) });
             } else {
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
-                raw.push({ divisor: d, status: 'too_many', decimalCount: dec });
+                items.push({ divisor: d, status: 'too_many', text: `❌ >3 знаков (${dec})` });
             }
+        }
+        return { dividend, divisors: divs, items };
+    }
+    
+    function renderResults(results) {
+        if (!results) return;
+        let html = '';
+        for (let item of results.items) {
+            const badgeClass = (item.status === 'ok') ? '' : 'reject';
+            html += `<div class="result-item">
+                        <span class="divisor-val">${item.divisor}</span>
+                        <span class="result-badge ${badgeClass}">${item.text}</span>
+                    </div>`;
         }
         if (html === '') html = '<div style="padding:28px;text-align:center;">Нет результатов</div>';
-        resultsContainer.innerHTML = html;
-        return { dividend, divisors: divs, rawResults: raw };
-    }
-    
-    function autoCalculate() {
-        const res = computeAndRender();
-        if (!res.error && res.dividend !== undefined) {
-            saveToHistory(res.dividend, res.divisors, res.rawResults);
+        if (lastResultsHtml !== html) {
+            resultsContainer.innerHTML = html;
+            lastResultsHtml = html;
         }
     }
     
-    // ---------- Управление клавиатурой ----------
+    let pendingUpdate = false;
+    function scheduleUpdate() {
+        if (updateTimeout) clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(() => {
+            const results = computeResults();
+            if (results) {
+                renderResults(results);
+                saveToHistory(results.dividend, results.divisors, results.items);
+            } else {
+                resultsContainer.innerHTML = '<div style="padding:28px;text-align:center;color:var(--danger);">⚠️ Проверьте данные</div>';
+            }
+            updateTimeout = null;
+        }, 150);
+    }
+    
+    // ---- клавиатура для делимого (мгновенное изменение поля) ----
     function handleKeyPress(key) {
-        if (!activeField) {
-            setActiveField(dividendInput);
-            activeField = dividendInput;
-        }
-        let currentValue = activeField.value;
-        if (key === 'C') {
-            activeField.value = '';
-        } else if (key === '⌫') {
-            activeField.value = currentValue.slice(0, -1);
-        } else if (key === '-') {
-            let val = parseFloat(currentValue);
-            if (!isNaN(val)) {
-                activeField.value = (-val).toString();
-            } else {
-                activeField.value = '-' + currentValue;
-            }
+        if (!activeField && dividendInput) setActiveField(dividendInput);
+        if (activeField !== dividendInput) setActiveField(dividendInput);
+        let val = dividendInput.value;
+        if (key === 'C') dividendInput.value = '';
+        else if (key === '⌫') dividendInput.value = val.slice(0, -1);
+        else if (key === '-') {
+            let num = parseFloat(val);
+            dividendInput.value = isNaN(num) ? '-' + val : (-num).toString();
         } else if (key === '.') {
-            if (!currentValue.includes('.')) {
-                activeField.value = currentValue === '' ? '0.' : currentValue + '.';
-            }
-        } else if (key === 'Enter') {
-            autoCalculate();
-            return;
-        } else {
-            if (currentValue === '0' && key !== '.') {
-                activeField.value = key;
-            } else {
-                activeField.value = currentValue + key;
-            }
+            if (!val.includes('.')) dividendInput.value = val === '' ? '0.' : val + '.';
+        } else if (key === 'Enter') { scheduleUpdate(); return; }
+        else {
+            if (val === '0') dividendInput.value = key;
+            else dividendInput.value = val + key;
         }
-        autoCalculate();
+        scheduleUpdate();
     }
     
     function initKeypad() {
-        const keys = document.querySelectorAll('.key-btn');
-        keys.forEach(btn => {
+        document.querySelectorAll('.key-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const key = btn.getAttribute('data-key');
-                if (key) handleKeyPress(key);
+                e.preventDefault();
+                handleKeyPress(btn.getAttribute('data-key'));
             });
         });
     }
     
-    // ---------- История ----------
+    // ---- история (локальная) ----
     let history = [];
     function loadHistory() {
         const stored = localStorage.getItem('calcDivisionHistory');
-        if (stored) {
-            try {
-                history = JSON.parse(stored);
-                if (!Array.isArray(history)) history = [];
-            } catch(e) { history = []; }
-        } else history = [];
+        history = stored ? JSON.parse(stored) : [];
         renderHistory();
     }
-    function saveHistory() {
-        localStorage.setItem('calcDivisionHistory', JSON.stringify(history.slice(0, 20)));
-    }
-    function saveToHistory(dividend, divisors, resultsArray) {
-        const newItem = {
-            dividend,
-            divisors: [...divisors],
-            results: resultsArray.map(r => ({ divisor: r.divisor, status: r.status })),
-            timestamp: Date.now()
-        };
-        history.unshift(newItem);
-        if (history.length > 20) history = history.slice(0, 20);
+    function saveHistory() { localStorage.setItem('calcDivisionHistory', JSON.stringify(history.slice(0,20))); }
+    function saveToHistory(dividend, divisors, items) {
+        const resultsStatus = items.map(i => i.status);
+        history.unshift({ dividend, divisors, results: resultsStatus, timestamp: Date.now() });
+        if (history.length > 20) history.pop();
         saveHistory();
         renderHistory();
     }
     function renderHistory() {
         if (!historyListDiv) return;
-        if (history.length === 0) {
-            historyListDiv.innerHTML = '<div style="padding: 16px; text-align: center; color: var(--text-light);">Нет расчётов</div>';
-            return;
-        }
+        if (!history.length) { historyListDiv.innerHTML = '<div style="padding:16px;text-align:center;">Нет расчётов</div>'; return; }
         let html = '';
-        for (let i=0; i<history.length; i++) {
-            const item = history[i];
+        history.forEach((item,i) => {
             const date = new Date(item.timestamp).toLocaleString();
-            const okCount = item.results.filter(r => r.status === 'ok').length;
-            html += `
-                <div class="history-item" data-idx="${i}">
-                    <div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div>
-                    <div class="history-date">${date} • успешных: ${okCount}</div>
-                </div>
-            `;
-        }
+            const okCount = item.results.filter(s=>s==='ok').length;
+            html += `<div class="history-item" data-idx="${i}"><div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div><div class="history-date">${date} • успешных: ${okCount}</div></div>`;
+        });
         historyListDiv.innerHTML = html;
         document.querySelectorAll('.history-item').forEach(el => {
             el.addEventListener('click', (e) => {
-                const idx = parseInt(el.getAttribute('data-idx'));
-                if (!isNaN(idx) && history[idx]) {
+                const idx = el.dataset.idx;
+                if (history[idx]) {
                     dividendInput.value = history[idx].dividend;
                     divisorValues = [...history[idx].divisors];
                     renderDivisors();
-                    autoCalculate();
+                    scheduleUpdate();
                     closeMenu();
                 }
             });
         });
     }
-    function clearHistory() {
-        if (confirm('Очистить всю историю?')) {
-            history = [];
-            saveHistory();
-            renderHistory();
-        }
-    }
+    function clearHistory() { if(confirm('Очистить историю?')) { history=[]; saveHistory(); renderHistory(); } }
     
-    // ---------- Панель меню ----------
+    // ---- меню + скрытие клавиатуры ----
     function openMenu() {
         sidePanel.classList.add('open');
         overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
+        keypadDiv.classList.add('hidden');
     }
     function closeMenu() {
         sidePanel.classList.remove('open');
         overlay.classList.remove('active');
         document.body.style.overflow = '';
+        keypadDiv.classList.remove('hidden');
     }
     menuBtn.addEventListener('click', openMenu);
     overlay.addEventListener('click', closeMenu);
     closePanelBtn.addEventListener('click', closeMenu);
     
-    // ---------- Тёмная тема ----------
+    // ---- тёмная тема ----
     const themeBtn = document.getElementById('themeToggle');
     function setTheme(theme) {
         if (theme === 'dark') {
@@ -739,31 +689,20 @@
             localStorage.setItem('calcTheme', 'light');
         }
     }
-    function toggleTheme() {
-        if (document.body.classList.contains('dark')) setTheme('light');
-        else setTheme('dark');
-    }
-    const savedTheme = localStorage.getItem('calcTheme');
-    if (savedTheme === 'dark') setTheme('dark');
-    else setTheme('light');
+    function toggleTheme() { document.body.classList.contains('dark') ? setTheme('light') : setTheme('dark'); }
+    if (localStorage.getItem('calcTheme') === 'dark') setTheme('dark'); else setTheme('light');
     themeBtn.addEventListener('click', toggleTheme);
     
-    // ---------- Инициализация ----------
-    function init() {
-        renderDivisors();
-        loadHistory();
-        autoCalculate();
-        initKeypad();
-        dividendInput.classList.add('editable-field');
-        dividendInput.addEventListener('click', () => setActiveField(dividendInput));
-        setActiveField(dividendInput);
-    }
-    
+    // ---- инициализация ----
+    dividendInput.addEventListener('click', () => setActiveField(dividendInput));
+    setActiveField(dividendInput);
+    renderDivisors();
+    loadHistory();
+    scheduleUpdate(); // первый расчёт
+    initKeypad();
     addBtn.addEventListener('click', addDivisor);
     removeLastBtn.addEventListener('click', removeLastDivisor);
     clearHistoryBtn.addEventListener('click', clearHistory);
-    
-    init();
 </script>
 </body>
 </html>
