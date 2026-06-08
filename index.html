@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Калькулятор деления с клавиатурой</title>
+    <title>Калькулятор деления — большая клавиатура</title>
     <style>
         * {
             box-sizing: border-box;
@@ -246,7 +246,7 @@
         .main-content {
             max-width: 800px;
             margin: 0 auto;
-            padding: 80px 20px 140px; /* нижний отступ для клавиатуры */
+            padding: 80px 20px 180px; /* увеличен нижний отступ для высокой клавиатуры */
             width: 100%;
         }
         .dividend-area {
@@ -315,7 +315,7 @@
             color: var(--danger);
             font-size: 1.1rem;
         }
-        /* Клавиатура */
+        /* Увеличенная клавиатура — больше и выше */
         .keypad {
             position: fixed;
             bottom: 0;
@@ -323,24 +323,25 @@
             right: 0;
             background: var(--keypad-bg);
             border-top: 2px solid var(--border);
-            padding: 12px 16px 20px;
+            padding: 20px 20px 28px;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            gap: 14px;
             z-index: 100;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.15);
         }
         .key-btn {
             background: var(--key-btn);
             border: 1px solid var(--border);
-            padding: 16px 0;
-            font-size: 1.6rem;
+            padding: 24px 0;
+            font-size: 2rem;
             font-weight: 600;
-            border-radius: 48px;
+            border-radius: 56px;
             text-align: center;
             cursor: pointer;
             color: var(--text);
             transition: 0.05s linear;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .key-btn:active {
             transform: scale(0.96);
@@ -356,8 +357,8 @@
         }
         .theme-fab {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 24px;
+            right: 24px;
             background: var(--card-bg);
             border: 1px solid var(--border);
             width: 56px;
@@ -373,13 +374,18 @@
             color: var(--text);
         }
         @media (max-width: 550px) {
-            .main-content { padding: 70px 16px 160px; }
+            .main-content { padding: 70px 16px 200px; }
             .big-input { font-size: 1.6rem; padding: 14px; }
             .result-header { font-size: 1.1rem; padding: 14px 16px 8px; }
             .result-item { padding: 12px 16px; }
             .divisor-val { font-size: 1.2rem; }
             .result-badge { font-size: 1.2rem; padding: 6px 16px; }
-            .key-btn { font-size: 1.3rem; padding: 12px 0; }
+            /* Увеличиваем кнопки на телефонах */
+            .keypad { padding: 16px 16px 24px; gap: 12px; }
+            .key-btn { padding: 18px 0; font-size: 1.6rem; border-radius: 48px; }
+        }
+        @media (max-width: 400px) {
+            .key-btn { padding: 14px 0; font-size: 1.4rem; }
         }
     </style>
 </head>
@@ -423,7 +429,7 @@
     </div>
     <div class="theme-fab" id="themeToggle">🌙</div>
 
-    <!-- Виртуальная клавиатура -->
+    <!-- Увеличенная виртуальная клавиатура -->
     <div class="keypad" id="keypad">
         <div class="key-btn" data-key="7">7</div>
         <div class="key-btn" data-key="8">8</div>
@@ -477,11 +483,9 @@
     const closePanelBtn = document.getElementById('closePanelBtn');
     
     let divisorValues = [18, 16, 13, 11];
-    let activeField = null; // текущее активное поле (input)
+    let activeField = null;
     
-    // Функция для подсветки активного поля
     function setActiveField(field) {
-        // Убираем подсветку со всех
         document.querySelectorAll('.editable-field').forEach(f => f.classList.remove('active-field'));
         if (field) {
             field.classList.add('active-field');
@@ -491,7 +495,6 @@
         }
     }
     
-    // Создание полей делителей с возможностью активации
     function renderDivisors() {
         divisorsContainer.innerHTML = '';
         divisorValues.forEach((val, idx) => {
@@ -538,7 +541,6 @@
         autoCalculate();
     }
     
-    // Обновление значений делителей из полей
     function updateDivisorsFromInputs() {
         const inputs = document.querySelectorAll('.divisor-input');
         for (let i = 0; i < inputs.length; i++) {
@@ -549,9 +551,7 @@
         }
     }
     
-    // Расчёт и отображение результатов
     function computeAndRender() {
-        // Сначала синхронизируем divisorValues из полей (на случай прямого редактирования)
         updateDivisorsFromInputs();
         const dividend = parseFloat(dividendInput.value);
         if (isNaN(dividend)) {
@@ -602,7 +602,6 @@
     // ---------- Управление клавиатурой ----------
     function handleKeyPress(key) {
         if (!activeField) {
-            // Если нет активного поля, активируем делимое
             setActiveField(dividendInput);
             activeField = dividendInput;
         }
@@ -612,7 +611,6 @@
         } else if (key === '⌫') {
             activeField.value = currentValue.slice(0, -1);
         } else if (key === '-') {
-            // смена знака
             let val = parseFloat(currentValue);
             if (!isNaN(val)) {
                 activeField.value = (-val).toString();
@@ -624,22 +622,18 @@
                 activeField.value = currentValue === '' ? '0.' : currentValue + '.';
             }
         } else if (key === 'Enter') {
-            // Просто пересчёт
             autoCalculate();
             return;
         } else {
-            // цифры
             if (currentValue === '0' && key !== '.') {
                 activeField.value = key;
             } else {
                 activeField.value = currentValue + key;
             }
         }
-        // После изменения поля запускаем пересчёт
         autoCalculate();
     }
     
-    // Назначение обработчиков кнопок клавиатуры
     function initKeypad() {
         const keys = document.querySelectorAll('.key-btn');
         keys.forEach(btn => {
@@ -760,11 +754,9 @@
         loadHistory();
         autoCalculate();
         initKeypad();
-        // Активация делимого по клику
-        dividendInput.addEventListener('click', () => setActiveField(dividendInput));
-        // Добавляем класс editable-field для делимого, чтобы подсвечивать
         dividendInput.classList.add('editable-field');
-        setActiveField(dividendInput); // по умолчанию активное поле - делимое
+        dividendInput.addEventListener('click', () => setActiveField(dividendInput));
+        setActiveField(dividendInput);
     }
     
     addBtn.addEventListener('click', addDivisor);
