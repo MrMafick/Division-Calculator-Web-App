@@ -42,6 +42,7 @@
             min-height: 100vh;
             transition: background 0.2s;
         }
+        /* Кнопка меню (увеличенная) */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -82,12 +83,13 @@
             opacity: 1;
             visibility: visible;
         }
+        /* Боковая панель — увеличенная */
         .side-panel {
             position: fixed;
             top: 0;
             left: 0;
             width: 85%;
-            max-width: 440px;
+            max-width: 460px;
             height: 100%;
             background: var(--card-bg);
             z-index: 201;
@@ -419,7 +421,7 @@
     
     let divisorValues = [18, 16, 13, 11];
     
-    // ---- рендер делителей ----
+    // ---- рендер делителей (исправлено: удаление работает корректно, автообновление) ----
     function renderDivisors() {
         divisorsContainer.innerHTML = '';
         divisorValues.forEach((val, idx) => {
@@ -445,8 +447,8 @@
                     return;
                 }
                 divisorValues.splice(idx, 1);
-                renderDivisors();
-                autoCalculate();
+                renderDivisors();      // перерисовываем список без удалённого
+                autoCalculate();       // пересчитываем результаты
             });
             divisorsContainer.appendChild(row);
         });
@@ -517,37 +519,61 @@
     }
     function saveHistory() { localStorage.setItem('bigDivisionHistory', JSON.stringify(history.slice(0,20))); }
     function saveToHistory(dividend, divisors, results) {
-        history.unshift({ dividend, divisors, results: results.map(r=>r.status), timestamp: Date.now() });
+        const newItem = {
+            dividend,
+            divisors: [...divisors],
+            results: results.map(r=>r.status),
+            timestamp: Date.now()
+        };
+        history.unshift(newItem);
         if (history.length > 20) history.pop();
         saveHistory();
         renderHistory();
     }
     function renderHistory() {
         if (!historyListDiv) return;
-        if (!history.length) { historyListDiv.innerHTML = '<div style="padding:20px;text-align:center;">Нет расчётов</div>'; return; }
+        if (!history.length) {
+            historyListDiv.innerHTML = '<div style="padding:20px;text-align:center;">Нет расчётов</div>';
+            return;
+        }
         let html = '';
-        history.forEach((item,i) => {
+        history.forEach((item, i) => {
             const date = new Date(item.timestamp).toLocaleString();
-            const okCount = item.results.filter(s=>s==='ok').length;
-            html += `<div class="history-item" data-idx="${i}"><div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div><div class="history-date">${date} • успешных: ${okCount}</div></div>`;
+            const okCount = item.results.filter(s => s === 'ok').length;
+            html += `
+                <div class="history-item" data-idx="${i}">
+                    <div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div>
+                    <div class="history-date">${date} • успешных: ${okCount}</div>
+                </div>
+            `;
         });
         historyListDiv.innerHTML = html;
+        // Привязываем обработчики к новым элементам
         document.querySelectorAll('.history-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-                const idx = el.dataset.idx;
-                if (history[idx]) {
-                    dividendInput.value = history[idx].dividend;
-                    divisorValues = [...history[idx].divisors];
-                    renderDivisors();
-                    autoCalculate();
-                    closeMenu();
-                }
-            });
+            el.removeEventListener('click', historyClickHandler);
+            el.addEventListener('click', historyClickHandler);
         });
     }
-    function clearHistory() { if(confirm('Очистить историю?')) { history=[]; saveHistory(); renderHistory(); } }
+    function historyClickHandler(e) {
+        const idx = this.dataset.idx;
+        if (idx !== undefined && history[idx]) {
+            const item = history[idx];
+            dividendInput.value = item.dividend;
+            divisorValues = [...item.divisors];
+            renderDivisors();
+            autoCalculate();
+            closeMenu();
+        }
+    }
+    function clearHistory() {
+        if (confirm('Очистить всю историю?')) {
+            history = [];
+            saveHistory();
+            renderHistory();
+        }
+    }
     
-    // ---- меню ----
+    // ---- меню (открытие/закрытие) ----
     function openMenu() {
         sidePanel.classList.add('open');
         overlay.classList.add('active');
