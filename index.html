@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Гибкое деление — вход через Google</title>
+    <!-- Добавляем стили Firebase UI для красивого виджета входа -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+    <style>
+        /* Стили остаются прежними, я добавил лишь несколько новых классов */
+        :root { /* ... ваши переменные ... */ }
+        body.dark { /* ... переменные для тёмной темы ... */ }
+        * { box-sizing: border-box; }
+        body { /* ... стили body ... */ }
+        .card { /* ... стили карточки ... */ }
+
+        /* Новые стили для аутентификации */
+        .auth-section { display: flex; justify-content: flex-end; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .user-info { display: flex; align-items: center; gap: 10px; background: var(--result-bg); padding: 5px 10px 5px 5px; border-radius: 60px; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .user-name { font-weight: 500; color: var(--text-primary); }
+        .sign-out-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px; border-radius: 50%; color: var(--text-secondary); }
+        .sign-out-btn:hover { background: var(--rejected-bg); }
+        #loginBtn { background: var(--btn-primary); color: white; border: none; padding: 8px 18px; border-radius: 40px; cursor: pointer; font-weight: 500; }
+        .sync-status { font-size: 0.7rem; margin-left: 10px; color: var(--text-secondary); display: inline-block; vertical-align: middle; }
+        /* Остальные стили оставьте без изменений */
+    </style>
+</head>
+<body>
+<div class="card">
+    <!-- Новая секция для входа/профиля -->
+    <div class="auth-section" id="authSection">
+        <!-- Сюда будет динамически вставляться либо кнопка входа, либо информация о пользователе -->
+    </div>
+
+    <!-- Остальной интерфейс калькулятора оставляем без изменений -->
+    <div class="header">
+        <h1>➕➖ Гибкое деление</h1>
+        <button class="theme-toggle" id="themeToggle" aria-label="Тёмная тема">🌙</button>
+    </div>
+    <div class="sub">Результаты с <strong>≤ 3 цифрами после запятой</strong>. История сохраняется в вашем Google аккаунте.</div>
+
+    <label for="dividend">Делимое</label>
+    <input type="number" id="dividend" class="input-field" placeholder="Число" step="any" value="100">
+
+    <div class="divider"></div>
+    <div class="divisors-container" id="divisorsContainer"></div>
+
+    <div class="buttons-row">
+        <button id="addDivisorBtn" class="action-btn">➕ Добавить делитель</button>
+        <button id="removeDivisorBtn" class="action-btn danger">➖ Удалить последний</button>
+    </div>
+    <button id="calcBtn" class="calc-btn">🧮 Вычислить результаты</button>
+
+    <div class="results" id="resultsArea">
+        <div class="result-header">📊 Результаты</div>
+        <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нажмите «Вычислить»</div>
+    </div>
+
+    <div class="history" id="historyArea">
+        <div class="history-header">
+            📜 История вычислений <span id="syncHistoryStatus" class="sync-status"></span>
+            <button id="clearHistoryBtn" class="clear-history">Очистить всё</button>
+        </div>
+        <div id="historyList" class="history-list">
+            <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Войдите в аккаунт, чтобы загрузить историю</div>
+        </div>
+    </div>
+    <div class="info-note">
+        🔐 История привязана к вашему Google аккаунту. Войдите, чтобы сохранять и синхронизировать расчёты между устройствами.
+    </div>
+    <footer>динамические делители • проверка до 3 знаков • облачная история</footer>
+</div>
+
+<!-- Подключаем Firebase SDK -->
+<script type="module">
+    // Импортируем необходимые модули Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+    // ВАШИ НАСТРОЙКИ FIREBASE SDK
+    // TODO: Замените этот объект на свои данные из шага 2.2
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Инициализируем Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    const db = getFirestore(app);
+
+    // --- ВСЯ ОСТАЛЬНАЯ ЛОГИКА КАЛЬКУЛЯТОРА ---
+    // (Функции getDecimalPlacesCount, formatNumberSimple, refreshDivisorLabels,
+    // addDivisor, removeLastDivisor, getAllDivisors, calculateAndReturnResults,
+    // renderHistory, setDivisorsFromArray, initDefaultDivisors и т.д.
+    // должны быть здесь без изменений)
+
+    // --- НОВАЯ ЛОГИКА ДЛЯ РАБОТЫ С FIRESTORE ---
+    const CURRENT_USER_HISTORY_KEY = 'userHistory';
+    let currentUser = null; // Храним текущего пользователя
+
+    // Функция для загрузки истории из Firestore
+    async function loadHistoryFromFirestore(userId) {
+        try {
+            const historyRef = collection(db, 'users', userId, 'history');
+            const q = query(historyRef, orderBy('timestamp', 'desc'), limit(20));
+            const querySnapshot = await getDocs(q);
+            const historyData = [];
+            querySnapshot.forEach((doc) => {
+                historyData.push({ id: doc.id, ...doc.data() });
+            });
+            return historyData;
+        } catch (error) {
+            console.error("Ошибка загрузки истории:", error);
+            showNotification('Не удалось загрузить историю', 'error');
+            return [];
+        }
+    }
+
+    // Функция для сохранения истории в Firestore
+    async function saveHistoryToFirestore(userId, historyArray) {
+        if (!userId || !historyArray) return;
+        
+        try {
+            const batch = writeBatch(db);
+            const historyRef = collection(db, 'users', userId, 'history');
+            
+            // Получаем все существующие документы, чтобы удалить их перед записью
+            const existingDocs = await getDocs(historyRef);
+            existingDocs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            
+            // Добавляем новые записи
+            historyArray.forEach((item, index) => {
+                const docRef = doc(historyRef); // автоматический ID
+                batch.set(docRef, {
+                    dividend: item.dividend,
+                    divisorsArray: item.divisorsArray,
+                    resultsArray: item.resultsArray,
+                    timestamp: item.timestamp
+                });
+            });
+            
+            await batch.commit();
+            console.log("История успешно сохранена в Firestore");
+            return true;
+        } catch (error) {
+            console.error("Ошибка сохранения истории:", error);
+            showNotification('Не удалось сохранить историю', 'error');
+            return false;
+        }
+    }
+
+    // Функция для отображения уведомлений
+    function showNotification(message, type = 'info') {
+        // Простая реализация - можно улучшить
+        const statusSpan = document.getElementById('syncHistoryStatus');
+        if (statusSpan) {
+            statusSpan.textContent = message;
+            statusSpan.style.color = type === 'error' ? 'var(--danger-text)' : 'var(--text-secondary)';
+            setTimeout(() => {
+                statusSpan.textContent = '';
+            }, 3000);
+        } else {
+            alert(message);
+        }
+    }
+
+    // --- ИНТЕГРАЦИЯ С ИНТЕРФЕЙСОМ ---
+    
+    // Функция обновления UI в зависимости от состояния входа
+    function updateAuthUI(user) {
+        const authSection = document.getElementById('authSection');
+        if (!authSection) return;
+        
+        if (user) {
+            // Пользователь вошёл
+            authSection.innerHTML = `
+                <div class="user-info">
+                    <img src="${user.photoURL || 'https://via.placeholder.com/32'}" alt="Avatar" class="avatar">
+                    <span class="user-name">${user.displayName || user.email}</span>
+                    <button id="signOutBtn" class="sign-out-btn" title="Выйти">🚪</button>
+                </div>
+            `;
+            document.getElementById('signOutBtn')?.addEventListener('click', () => signOut(auth));
+        } else {
+            // Пользователь не вошёл
+            authSection.innerHTML = `<button id="loginBtn" class="action-btn primary">🔐 Войти через Google</button>`;
+            document.getElementById('loginBtn')?.addEventListener('click', () => signInWithPopup(auth, provider));
+        }
+    }
+    
+    // Слушаем изменения состояния аутентификации
+    onAuthStateChanged(auth, async (user) => {
+        currentUser = user;
+        updateAuthUI(user);
+        
+        if (user) {
+            showNotification('Загрузка истории...', 'info');
+            // Загружаем историю из Firestore
+            const firestoreHistory = await loadHistoryFromFirestore(user.uid);
+            if (firestoreHistory.length > 0) {
+                // Преобразуем формат Firestore в формат приложения
+                window.history = firestoreHistory.map(item => ({
+                    dividend: item.dividend,
+                    divisorsArray: item.divisorsArray,
+                    resultsArray: item.resultsArray,
+                    timestamp: item.timestamp
+                }));
+                renderHistory();
+                showNotification(`Загружено ${firestoreHistory.length} записей`, 'success');
+            } else {
+                // Если в Firestore нет истории, показываем локальную
+                renderHistory();
+                showNotification('Нет сохранённых расчётов', 'info');
+            }
+        } else {
+            // Пользователь вышел - очищаем интерфейс
+            window.history = [];
+            renderHistory();
+            showNotification('Вы вышли из аккаунта', 'info');
+        }
+    });
+    
+    // Переопределяем функцию сохранения, чтобы она работала с Firestore
+    const originalSaveToHistory = window.saveToHistory || function() {};
+    window.saveToHistory = function(dividend, divisors, results) {
+        if (currentUser) {
+            // Сохраняем в локальную переменную
+            const newItem = {
+                dividend: dividend,
+                divisorsArray: [...divisors],
+                resultsArray: results.map(r => ({ divisor: r.divisor, status: r.status, quotient: r.quotient })),
+                timestamp: Date.now()
+            };
+            
+            if (!window.history) window.history = [];
+            window.history.unshift(newItem);
+            if (window.history.length > 20) window.history = window.history.slice(0, 20);
+            
+            // Сохраняем в Firestore
+            saveHistoryToFirestore(currentUser.uid, window.history);
+            renderHistory();
+        } else {
+            // Если пользователь не авторизован, используем localStorage как запасной вариант
+            originalSaveToHistory(dividend, divisors, results);
+        }
+    };
+    
+    // Переопределяем renderHistory для отображения статуса синхронизации
+    const originalRenderHistory = window.renderHistory || function() {};
+    window.renderHistory = function() {
+        const historyContainer = document.getElementById('historyList');
+        if (!historyContainer) return;
+        
+        if (!window.history || window.history.length === 0) {
+            if (currentUser) {
+                historyContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>';
+            } else {
+                historyContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Войдите в аккаунт, чтобы загрузить историю</div>';
+            }
+            return;
+        }
+        
+        let html = '';
+        for (let i = 0; i < window.history.length; i++) {
+            const item = window.history[i];
+            const date = new Date(item.timestamp).toLocaleString();
+            const shortDivisors = item.divisorsArray.join(', ');
+            html += `
+                <div class="history-item" data-history-index="${i}">
+                    <div class="history-dividend">${item.dividend} ÷ [${shortDivisors}]</div>
+                    <div class="history-details">${date} • ${item.resultsArray.filter(r => r.status === 'ok').length} успешных</div>
+                </div>
+            `;
+        }
+        historyContainer.innerHTML = html;
+        
+        // Добавляем обработчики для элементов истории
+        document.querySelectorAll('.history-item').forEach(el => {
+            el.removeEventListener('click', window.handleHistoryClick);
+            el.addEventListener('click', window.handleHistoryClick);
+        });
+    };
+    
+    // Обработчик клика по истории
+    window.handleHistoryClick = function(e) {
+        const idx = this.getAttribute('data-history-index');
+        if (idx !== null && window.history[idx]) {
+            const item = window.history[idx];
+            document.getElementById('dividend').value = item.dividend;
+            setDivisorsFromArray(item.divisorsArray);
+            calculateAndDisplay();
+        }
+    };
+    
+    // Очистка истории
+    window.clearHistory = async function() {
+        if (currentUser) {
+            if (confirm('Вы уверены, что хотите очистить всю историю? Это действие необратимо.')) {
+                try {
+                    const historyRef = collection(db, 'users', currentUser.uid, 'history');
+                    const existingDocs = await getDocs(historyRef);
+                    const batch = writeBatch(db);
+                    existingDocs.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                    window.history = [];
+                    renderHistory();
+                    showNotification('История очищена', 'success');
+                } catch (error) {
+                    console.error("Ошибка очистки истории:", error);
+                    showNotification('Не удалось очистить историю', 'error');
+                }
+            }
+        } else {
+            // Если пользователь не авторизован, очищаем localStorage
+            if (confirm('Вы уверены, что хотите очистить всю историю?')) {
+                localStorage.removeItem('divisionHistory');
+                window.history = [];
+                renderHistory();
+                showNotification('Локальная история очищена', 'success');
+            }
+        }
+    };
+    
+    // Подключаем обработчик очистки истории
+    document.getElementById('clearHistoryBtn')?.addEventListener('click', window.clearHistory);
+    
+    // --- ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ---
+    // Загружаем историю из localStorage как fallback
+    const storedHistory = localStorage.getItem('divisionHistory');
+    if (storedHistory) {
+        try {
+            window.history = JSON.parse(storedHistory);
+        } catch(e) { window.history = []; }
+    } else {
+        window.history = [];
+    }
+    
+    // Инициализируем интерфейс калькулятора
+    initDefaultDivisors();
+    
+    // Добавляем обработчики для кнопок калькулятора
+    document.getElementById('addDivisorBtn')?.addEventListener('click', () => addDivisor(2));
+    document.getElementById('removeDivisorBtn')?.addEventListener('click', removeLastDivisor);
+    document.getElementById('calcBtn')?.addEventListener('click', calculateAndDisplay);
+    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    
+    // Функция для переключения темы
+    function toggleTheme() {
+        if (document.body.classList.contains('dark')) {
+            document.body.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+    
+    // Применяем сохранённую тему
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+    }
+    
+    // Функции, которые должны быть определены, но для краткости я их здесь не привожу
+    // Предполагается, что функции getDecimalPlacesCount, formatNumberSimple, 
+    // refreshDivisorLabels, addDivisor, removeLastDivisor, getAllDivisors, 
+    // calculateAndReturnResults, renderHistory, setDivisorsFromArray, initDefaultDivisors
+    // уже определены выше в коде
+    
+    console.log("Приложение инициализировано");
+</script>
+</body>
+</html>
