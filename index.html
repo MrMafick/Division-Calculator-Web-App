@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Калькулятор деления — крупный интерфейс</title>
+    <title>Деление с точностью до 3 знаков</title>
     <style>
         * {
             box-sizing: border-box;
@@ -42,7 +42,7 @@
             min-height: 100vh;
             transition: background 0.2s;
         }
-        /* Кнопка меню (увеличенная) */
+        /* Кнопка меню — крупная */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -83,7 +83,7 @@
             opacity: 1;
             visibility: visible;
         }
-        /* Боковая панель — увеличенная */
+        /* Боковая панель */
         .side-panel {
             position: fixed;
             top: 0;
@@ -220,7 +220,9 @@
             cursor: pointer;
             border: 1px solid var(--border);
         }
-        .history-item:active { background: var(--danger-bg); }
+        .history-item:active {
+            background: var(--danger-bg);
+        }
         .history-main {
             font-weight: 600;
             font-size: 1rem;
@@ -391,229 +393,277 @@
     <div class="theme-fab" id="themeToggle">🌙</div>
 
 <script>
-    // ---- вспомогательные функции ----
-    function getDecimalCount(num) {
-        if (isNaN(num)) return -1;
-        let frac = Math.abs(num) - Math.floor(Math.abs(num));
-        if (frac < 1e-12) return 0;
-        let str = frac.toString().replace(/^0\./, '');
-        if (str.includes('e')) return 10;
-        return str.length;
-    }
-    function formatNumber(num) {
-        let s = num.toString();
-        if (s.includes('.')) s = s.replace(/\.?0+$/, '');
-        return s;
-    }
-    
-    // ---- DOM ----
-    const dividendInput = document.getElementById('dividend');
-    const divisorsContainer = document.getElementById('divisorsList');
-    const addBtn = document.getElementById('addDivBtn');
-    const removeLastBtn = document.getElementById('removeLastBtn');
-    const resultsContainer = document.getElementById('resultsContainer');
-    const historyListDiv = document.getElementById('historyList');
-    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    const menuBtn = document.getElementById('menuBtn');
-    const overlay = document.getElementById('overlay');
-    const sidePanel = document.getElementById('sidePanel');
-    const closePanelBtn = document.getElementById('closePanelBtn');
-    
-    let divisorValues = [18, 16, 13, 11];
-    
-    // ---- рендер делителей (исправлено: удаление работает корректно, автообновление) ----
-    function renderDivisors() {
-        divisorsContainer.innerHTML = '';
-        divisorValues.forEach((val, idx) => {
-            const row = document.createElement('div');
-            row.className = 'divisor-row';
-            row.innerHTML = `
-                <span class="label">Делитель ${idx+1}</span>
-                <input type="number" class="divisor-input" value="${val}" step="any" placeholder="Число">
-                <button class="remove-div" data-index="${idx}">✕</button>
-            `;
-            const input = row.querySelector('.divisor-input');
-            input.addEventListener('input', () => {
-                let newVal = parseFloat(input.value);
-                if (!isNaN(newVal)) divisorValues[idx] = newVal;
-                else divisorValues[idx] = 0;
-                autoCalculate();
-            });
-            const delBtn = row.querySelector('.remove-div');
-            delBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (divisorValues.length <= 1) {
-                    alert('Нужен хотя бы один делитель');
-                    return;
+    (function() {
+        // ---------- DOM элементы ----------
+        const dividendInput = document.getElementById('dividend');
+        const divisorsContainer = document.getElementById('divisorsList');
+        const addBtn = document.getElementById('addDivBtn');
+        const removeLastBtn = document.getElementById('removeLastBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const historyListDiv = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const overlay = document.getElementById('overlay');
+        const sidePanel = document.getElementById('sidePanel');
+        const closePanelBtn = document.getElementById('closePanelBtn');
+        
+        // ---------- Данные ----------
+        let divisorValues = [18, 16, 13, 11];   // начальные делители
+        let historyArray = [];                  // массив истории
+        
+        // ---------- Вспомогательные функции ----------
+        function getDecimalCount(num) {
+            if (isNaN(num)) return -1;
+            let frac = Math.abs(num) - Math.floor(Math.abs(num));
+            if (frac < 1e-12) return 0;
+            let str = frac.toString().replace(/^0\./, '');
+            if (str.includes('e')) return 10;
+            return str.length;
+        }
+        
+        function formatNumber(num) {
+            let s = num.toString();
+            if (s.includes('.')) s = s.replace(/\.?0+$/, '');
+            return s;
+        }
+        
+        // ---------- Расчёт и отображение результатов ----------
+        function updateResults() {
+            const dividend = parseFloat(dividendInput.value);
+            if (isNaN(dividend)) {
+                resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Введите число</div>';
+                return;
+            }
+            // Проверка делителей
+            let valid = true;
+            const divs = [];
+            for (let v of divisorValues) {
+                if (isNaN(v)) { valid = false; break; }
+                divs.push(v);
+            }
+            if (!valid) {
+                resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Проверьте делители</div>';
+                return;
+            }
+            
+            let html = '';
+            const resultItems = [];
+            for (let d of divs) {
+                if (d === 0) {
+                    html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
+                    resultItems.push({ divisor: d, status: 'zero' });
+                    continue;
                 }
-                divisorValues.splice(idx, 1);
-                renderDivisors();      // перерисовываем список без удалённого
-                autoCalculate();       // пересчитываем результаты
-            });
-            divisorsContainer.appendChild(row);
-        });
-    }
-    
-    function addDivisor() {
-        divisorValues.push(2);
-        renderDivisors();
-        autoCalculate();
-    }
-    function removeLastDivisor() {
-        if (divisorValues.length <= 1) {
-            alert('Должен быть хотя бы один делитель');
-            return;
-        }
-        divisorValues.pop();
-        renderDivisors();
-        autoCalculate();
-    }
-    
-    // ---- вычисление и отображение ----
-    function autoCalculate() {
-        const dividend = parseFloat(dividendInput.value);
-        if (isNaN(dividend)) {
-            resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Введите число</div>';
-            return;
-        }
-        let valid = true;
-        const divs = [];
-        for (let v of divisorValues) {
-            if (isNaN(v)) { valid = false; break; }
-            divs.push(v);
-        }
-        if (!valid) {
-            resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Проверьте делители</div>';
-            return;
-        }
-        let html = '';
-        const rawResults = [];
-        for (let d of divs) {
-            if (d === 0) {
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
-                rawResults.push({ divisor: d, status: 'zero' });
-                continue;
+                const q = dividend / d;
+                const dec = getDecimalCount(q);
+                if (dec <= 3) {
+                    const formatted = formatNumber(q);
+                    html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge">${formatted}</span></div>`;
+                    resultItems.push({ divisor: d, status: 'ok' });
+                } else {
+                    html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
+                    resultItems.push({ divisor: d, status: 'too_many' });
+                }
             }
-            const q = dividend / d;
-            const dec = getDecimalCount(q);
-            if (dec <= 3) {
-                const formatted = formatNumber(q);
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge">${formatted}</span></div>`;
-                rawResults.push({ divisor: d, status: 'ok' });
+            if (html === '') html = '<div style="padding:40px;text-align:center;">Нет результатов</div>';
+            resultsContainer.innerHTML = html;
+            
+            // Сохраняем в историю
+            saveToHistory(dividend, divs, resultItems);
+        }
+        
+        // ---------- Управление историей (localStorage) ----------
+        function loadHistoryFromStorage() {
+            const stored = localStorage.getItem('divisionHistoryApp');
+            if (stored) {
+                try {
+                    historyArray = JSON.parse(stored);
+                    if (!Array.isArray(historyArray)) historyArray = [];
+                } catch(e) { historyArray = []; }
             } else {
-                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
-                rawResults.push({ divisor: d, status: 'too_many' });
+                historyArray = [];
             }
-        }
-        if (html === '') html = '<div style="padding:40px;text-align:center;">Нет результатов</div>';
-        resultsContainer.innerHTML = html;
-        saveToHistory(dividend, divs, rawResults);
-    }
-    
-    // ---- история (localStorage) ----
-    let history = [];
-    function loadHistory() {
-        const stored = localStorage.getItem('bigDivisionHistory');
-        history = stored ? JSON.parse(stored) : [];
-        renderHistory();
-    }
-    function saveHistory() { localStorage.setItem('bigDivisionHistory', JSON.stringify(history.slice(0,20))); }
-    function saveToHistory(dividend, divisors, results) {
-        const newItem = {
-            dividend,
-            divisors: [...divisors],
-            results: results.map(r=>r.status),
-            timestamp: Date.now()
-        };
-        history.unshift(newItem);
-        if (history.length > 20) history.pop();
-        saveHistory();
-        renderHistory();
-    }
-    function renderHistory() {
-        if (!historyListDiv) return;
-        if (!history.length) {
-            historyListDiv.innerHTML = '<div style="padding:20px;text-align:center;">Нет расчётов</div>';
-            return;
-        }
-        let html = '';
-        history.forEach((item, i) => {
-            const date = new Date(item.timestamp).toLocaleString();
-            const okCount = item.results.filter(s => s === 'ok').length;
-            html += `
-                <div class="history-item" data-idx="${i}">
-                    <div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div>
-                    <div class="history-date">${date} • успешных: ${okCount}</div>
-                </div>
-            `;
-        });
-        historyListDiv.innerHTML = html;
-        // Привязываем обработчики к новым элементам
-        document.querySelectorAll('.history-item').forEach(el => {
-            el.removeEventListener('click', historyClickHandler);
-            el.addEventListener('click', historyClickHandler);
-        });
-    }
-    function historyClickHandler(e) {
-        const idx = this.dataset.idx;
-        if (idx !== undefined && history[idx]) {
-            const item = history[idx];
-            dividendInput.value = item.dividend;
-            divisorValues = [...item.divisors];
-            renderDivisors();
-            autoCalculate();
-            closeMenu();
-        }
-    }
-    function clearHistory() {
-        if (confirm('Очистить всю историю?')) {
-            history = [];
-            saveHistory();
             renderHistory();
         }
-    }
-    
-    // ---- меню (открытие/закрытие) ----
-    function openMenu() {
-        sidePanel.classList.add('open');
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeMenu() {
-        sidePanel.classList.remove('open');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-    menuBtn.addEventListener('click', openMenu);
-    overlay.addEventListener('click', closeMenu);
-    closePanelBtn.addEventListener('click', closeMenu);
-    
-    // ---- тёмная тема ----
-    const themeBtn = document.getElementById('themeToggle');
-    function setTheme(theme) {
-        if (theme === 'dark') {
-            document.body.classList.add('dark');
-            themeBtn.innerHTML = '☀️';
-            localStorage.setItem('bigTheme', 'dark');
-        } else {
-            document.body.classList.remove('dark');
-            themeBtn.innerHTML = '🌙';
-            localStorage.setItem('bigTheme', 'light');
+        
+        function saveHistoryToStorage() {
+            localStorage.setItem('divisionHistoryApp', JSON.stringify(historyArray.slice(0, 20)));
         }
-    }
-    function toggleTheme() { document.body.classList.contains('dark') ? setTheme('light') : setTheme('dark'); }
-    if (localStorage.getItem('bigTheme') === 'dark') setTheme('dark'); else setTheme('light');
-    themeBtn.addEventListener('click', toggleTheme);
-    
-    // ---- инициализация ----
-    dividendInput.addEventListener('input', autoCalculate);
-    addBtn.addEventListener('click', addDivisor);
-    removeLastBtn.addEventListener('click', removeLastDivisor);
-    clearHistoryBtn.addEventListener('click', clearHistory);
-    
-    renderDivisors();
-    loadHistory();
-    autoCalculate();
+        
+        function saveToHistory(dividend, divisors, results) {
+            const newItem = {
+                dividend: dividend,
+                divisors: [...divisors],
+                results: results.map(r => r.status),
+                timestamp: Date.now()
+            };
+            historyArray.unshift(newItem);
+            if (historyArray.length > 20) historyArray.pop();
+            saveHistoryToStorage();
+            renderHistory();
+        }
+        
+        function renderHistory() {
+            if (!historyListDiv) return;
+            if (historyArray.length === 0) {
+                historyListDiv.innerHTML = '<div style="padding:20px;text-align:center;">Нет расчётов</div>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < historyArray.length; i++) {
+                const item = historyArray[i];
+                const date = new Date(item.timestamp).toLocaleString();
+                const okCount = item.results.filter(s => s === 'ok').length;
+                html += `
+                    <div class="history-item" data-idx="${i}">
+                        <div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div>
+                        <div class="history-date">${date} • успешных: ${okCount}</div>
+                    </div>
+                `;
+            }
+            historyListDiv.innerHTML = html;
+            // Вешаем обработчики
+            document.querySelectorAll('.history-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const idx = parseInt(el.getAttribute('data-idx'));
+                    if (!isNaN(idx) && historyArray[idx]) {
+                        const item = historyArray[idx];
+                        dividendInput.value = item.dividend;
+                        divisorValues = [...item.divisors];
+                        renderDivisorsList();   // обновить список делителей в меню
+                        updateResults();        // пересчитать
+                        closeMenu();            // закрыть меню
+                    }
+                });
+            });
+        }
+        
+        function clearHistory() {
+            if (confirm('Очистить всю историю?')) {
+                historyArray = [];
+                saveHistoryToStorage();
+                renderHistory();
+            }
+        }
+        
+        // ---------- Рендер списка делителей (без глюков с индексами) ----------
+        function renderDivisorsList() {
+            divisorsContainer.innerHTML = '';
+            divisorValues.forEach((val, idx) => {
+                const row = document.createElement('div');
+                row.className = 'divisor-row';
+                // Создаём поля
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'label';
+                labelSpan.textContent = `Делитель ${idx+1}`;
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'divisor-input';
+                input.value = val;
+                input.step = 'any';
+                input.placeholder = 'Число';
+                const delBtn = document.createElement('button');
+                delBtn.className = 'remove-div';
+                delBtn.textContent = '✕';
+                // Обработчик изменения значения
+                input.addEventListener('input', (function(index) {
+                    return function() {
+                        let newVal = parseFloat(input.value);
+                        if (!isNaN(newVal)) divisorValues[index] = newVal;
+                        else divisorValues[index] = 0;
+                        updateResults();
+                    };
+                })(idx));
+                // Обработчик удаления
+                delBtn.addEventListener('click', (function(index) {
+                    return function(e) {
+                        e.stopPropagation();
+                        if (divisorValues.length <= 1) {
+                            alert('Должен быть хотя бы один делитель');
+                            return;
+                        }
+                        divisorValues.splice(index, 1);
+                        renderDivisorsList();   // перерисовываем
+                        updateResults();
+                    };
+                })(idx));
+                
+                row.appendChild(labelSpan);
+                row.appendChild(input);
+                row.appendChild(delBtn);
+                divisorsContainer.appendChild(row);
+            });
+        }
+        
+        // Добавить делитель
+        function addDivisor() {
+            divisorValues.push(2);
+            renderDivisorsList();
+            updateResults();
+        }
+        
+        // Удалить последний делитель
+        function removeLastDivisor() {
+            if (divisorValues.length <= 1) {
+                alert('Должен быть хотя бы один делитель');
+                return;
+            }
+            divisorValues.pop();
+            renderDivisorsList();
+            updateResults();
+        }
+        
+        // ---------- Меню (открыть/закрыть) ----------
+        function openMenu() {
+            sidePanel.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMenu() {
+            sidePanel.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // ---------- Тёмная тема ----------
+        const themeBtn = document.getElementById('themeToggle');
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+                themeBtn.innerHTML = '☀️';
+                localStorage.setItem('appTheme', 'dark');
+            } else {
+                document.body.classList.remove('dark');
+                themeBtn.innerHTML = '🌙';
+                localStorage.setItem('appTheme', 'light');
+            }
+        }
+        function toggleTheme() {
+            if (document.body.classList.contains('dark')) setTheme('light');
+            else setTheme('dark');
+        }
+        const savedTheme = localStorage.getItem('appTheme');
+        if (savedTheme === 'dark') setTheme('dark');
+        else setTheme('light');
+        
+        // ---------- Инициализация и подписка на события ----------
+        function init() {
+            renderDivisorsList();
+            loadHistoryFromStorage();
+            updateResults();
+            
+            dividendInput.addEventListener('input', updateResults);
+            addBtn.addEventListener('click', addDivisor);
+            removeLastBtn.addEventListener('click', removeLastDivisor);
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            menuBtn.addEventListener('click', openMenu);
+            overlay.addEventListener('click', closeMenu);
+            closePanelBtn.addEventListener('click', closeMenu);
+            themeBtn.addEventListener('click', toggleTheme);
+        }
+        
+        init();
+    })();
 </script>
 </body>
 </html>
