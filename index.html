@@ -42,7 +42,6 @@
             min-height: 100vh;
             transition: background 0.2s;
         }
-        /* Кнопка меню — крупная */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -83,7 +82,6 @@
             opacity: 1;
             visibility: visible;
         }
-        /* Боковая панель */
         .side-panel {
             position: fixed;
             top: 0;
@@ -145,25 +143,30 @@
             gap: 18px;
             margin-bottom: 24px;
         }
+        /* Исправленный стиль строки делителя — всё внутри рамки, крестик справа */
         .divisor-row {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             background: var(--panel-bg);
             border-radius: 80px;
-            padding: 8px 16px 8px 24px;
+            padding: 6px 12px 6px 20px;
             border: 1px solid var(--border);
+            width: 100%;
+            flex-wrap: nowrap;
         }
         .divisor-row .label {
             font-weight: 600;
-            min-width: 100px;
-            font-size: 1.2rem;
+            min-width: 85px;
+            font-size: 1.1rem;
             color: var(--text-light);
+            flex-shrink: 0;
         }
         .divisor-row input {
             flex: 1;
-            padding: 14px 12px;
-            font-size: 1.2rem;
+            min-width: 0; /* важно: разрешает сжатие */
+            padding: 12px 8px;
+            font-size: 1.1rem;
             border: none;
             background: transparent;
             color: var(--text);
@@ -174,11 +177,11 @@
         .remove-div {
             background: var(--danger-bg);
             border: none;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             cursor: pointer;
             color: var(--danger);
-            width: 52px;
-            height: 52px;
+            width: 44px;
+            height: 44px;
             border-radius: 40px;
             display: flex;
             align-items: center;
@@ -247,13 +250,12 @@
             width: 100%;
             text-align: center;
         }
-        /* Основной контент — прижат к левому краю */
         .main-content {
             width: 100%;
             padding: 100px 24px 60px 20px;
         }
         .dividend-area {
-            text-align: left; /* Выравнивание текста влево */
+            text-align: left;
             margin-bottom: 40px;
         }
         .dividend-area label {
@@ -268,7 +270,7 @@
             padding: 28px 24px;
             font-size: 2.4rem;
             font-weight: 700;
-            text-align: left; /* Текст влево, но можно оставить по центру, как удобнее */
+            text-align: left;
             border: 3px solid var(--border);
             border-radius: 80px;
             background: var(--input-bg);
@@ -344,10 +346,11 @@
             .result-badge { font-size: 1.2rem; padding: 6px 18px; }
             .side-panel { max-width: 90%; padding: 24px 16px; }
             .section-title { font-size: 1.3rem; }
-            .divisor-row .label { font-size: 1rem; min-width: 85px; }
-            .divisor-row input { font-size: 1rem; padding: 12px 8px; }
+            .divisor-row { gap: 8px; padding: 4px 10px 4px 16px; }
+            .divisor-row .label { min-width: 70px; font-size: 1rem; }
+            .divisor-row input { padding: 10px 6px; font-size: 1rem; }
+            .remove-div { width: 40px; height: 40px; font-size: 1.2rem; }
             .btn-sm { font-size: 1rem; padding: 12px 16px; }
-            .remove-div { width: 44px; height: 44px; font-size: 1.2rem; }
             .clear-history { padding: 12px 16px; font-size: 0.9rem; }
         }
     </style>
@@ -434,7 +437,6 @@
                 resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Введите число</div>';
                 return;
             }
-            // Проверка делителей
             let valid = true;
             const divs = [];
             for (let v of divisorValues) {
@@ -467,12 +469,10 @@
             }
             if (html === '') html = '<div style="padding:40px;text-align:center;">Нет результатов</div>';
             resultsContainer.innerHTML = html;
-            
-            // Сохраняем в историю
             saveToHistory(dividend, divs, resultItems);
         }
         
-        // ---------- Управление историей (localStorage) ----------
+        // ---------- Управление историей ----------
         function loadHistoryFromStorage() {
             const stored = localStorage.getItem('divisionHistoryApp');
             if (stored) {
@@ -522,7 +522,6 @@
                 `;
             }
             historyListDiv.innerHTML = html;
-            // Вешаем обработчики
             document.querySelectorAll('.history-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     const idx = parseInt(el.getAttribute('data-idx'));
@@ -530,9 +529,9 @@
                         const item = historyArray[idx];
                         dividendInput.value = item.dividend;
                         divisorValues = [...item.divisors];
-                        renderDivisorsList();   // обновить список делителей в меню
-                        updateResults();        // пересчитать
-                        closeMenu();            // закрыть меню
+                        renderDivisorsList();
+                        updateResults();
+                        closeMenu();
                     }
                 });
             });
@@ -546,13 +545,12 @@
             }
         }
         
-        // ---------- Рендер списка делителей (без глюков с индексами) ----------
+        // ---------- Рендер списка делителей ----------
         function renderDivisorsList() {
             divisorsContainer.innerHTML = '';
             divisorValues.forEach((val, idx) => {
                 const row = document.createElement('div');
                 row.className = 'divisor-row';
-                // Создаём поля
                 const labelSpan = document.createElement('span');
                 labelSpan.className = 'label';
                 labelSpan.textContent = `Делитель ${idx+1}`;
@@ -565,7 +563,6 @@
                 const delBtn = document.createElement('button');
                 delBtn.className = 'remove-div';
                 delBtn.textContent = '✕';
-                // Обработчик изменения значения
                 input.addEventListener('input', (function(index) {
                     return function() {
                         let newVal = parseFloat(input.value);
@@ -574,7 +571,6 @@
                         updateResults();
                     };
                 })(idx));
-                // Обработчик удаления
                 delBtn.addEventListener('click', (function(index) {
                     return function(e) {
                         e.stopPropagation();
@@ -583,11 +579,10 @@
                             return;
                         }
                         divisorValues.splice(index, 1);
-                        renderDivisorsList();   // перерисовываем
+                        renderDivisorsList();
                         updateResults();
                     };
                 })(idx));
-                
                 row.appendChild(labelSpan);
                 row.appendChild(input);
                 row.appendChild(delBtn);
@@ -595,14 +590,12 @@
             });
         }
         
-        // Добавить делитель
         function addDivisor() {
             divisorValues.push(2);
             renderDivisorsList();
             updateResults();
         }
         
-        // Удалить последний делитель
         function removeLastDivisor() {
             if (divisorValues.length <= 1) {
                 alert('Должен быть хотя бы один делитель');
@@ -613,7 +606,7 @@
             updateResults();
         }
         
-        // ---------- Меню (открыть/закрыть) ----------
+        // ---------- Меню ----------
         function openMenu() {
             sidePanel.classList.add('open');
             overlay.classList.add('active');
@@ -646,12 +639,11 @@
         if (savedTheme === 'dark') setTheme('dark');
         else setTheme('light');
         
-        // ---------- Инициализация и подписка на события ----------
+        // ---------- Инициализация ----------
         function init() {
             renderDivisorsList();
             loadHistoryFromStorage();
             updateResults();
-            
             dividendInput.addEventListener('input', updateResults);
             addBtn.addEventListener('click', addDivisor);
             removeLastBtn.addEventListener('click', removeLastDivisor);
@@ -661,7 +653,6 @@
             closePanelBtn.addEventListener('click', closeMenu);
             themeBtn.addEventListener('click', toggleTheme);
         }
-        
         init();
     })();
 </script>
