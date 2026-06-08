@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Гибкое деление — тёмная тема и история</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Деление с точностью до 3 знаков</title>
     <style>
-        /* ---------- CSS Variables (светлая тема по умолчанию) ---------- */
+        /* ---------- CSS Variables (светлая тема) ---------- */
         :root {
             --bg-body: #f3f4f6;
             --card-bg: #ffffff;
@@ -28,9 +28,8 @@
             --danger-bg: #fee2e2;
             --danger-text: #b91c1c;
             --history-item-hover: #f1f5f9;
-            --shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            --shadow: 0 8px 20px rgba(0,0,0,0.08);
         }
-
         body.dark {
             --bg-body: #0f172a;
             --card-bg: #1e293b;
@@ -53,41 +52,42 @@
             --danger-bg: #451a1a;
             --danger-text: #f87171;
             --history-item-hover: #334155;
-            --shadow: 0 20px 35px -10px rgba(0,0,0,0.4);
+            --shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
-
         * {
             box-sizing: border-box;
-            transition: background 0.2s ease, color 0.2s ease, border-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg-body);
             margin: 0;
             min-height: 100vh;
+            padding: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            transition: background 0.2s, color 0.2s;
         }
         .card {
-            max-width: 900px;
+            max-width: 700px;
             width: 100%;
             background: var(--card-bg);
             border-radius: 28px;
             box-shadow: var(--shadow);
-            padding: 28px 24px 36px;
+            padding: 20px 18px 28px;
+            transition: background 0.2s;
         }
-        /* Header with theme toggle */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 10px;
             margin-bottom: 8px;
         }
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 600;
             margin: 0;
             color: var(--text-primary);
@@ -98,39 +98,42 @@
             font-size: 1.4rem;
             cursor: pointer;
             border-radius: 60px;
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.1s;
             color: var(--btn-secondary-text);
+            transition: 0.1s;
         }
-        .theme-toggle:hover {
-            transform: scale(0.95);
+        .theme-toggle:active {
+            transform: scale(0.94);
         }
         .sub {
             color: var(--text-secondary);
             border-left: 4px solid var(--input-focus);
-            padding-left: 14px;
-            margin: 12px 0 24px 0;
-            font-size: 0.95rem;
+            padding-left: 12px;
+            margin: 12px 0 20px;
+            font-size: 0.85rem;
+            line-height: 1.3;
         }
         label {
             font-weight: 500;
             display: block;
             margin-bottom: 6px;
             color: var(--text-primary);
+            font-size: 0.9rem;
         }
         .input-field {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
             font-size: 1rem;
             border: 1.5px solid var(--border-input);
-            border-radius: 18px;
+            border-radius: 20px;
             background: var(--input-bg);
             font-family: monospace;
             color: var(--text-primary);
+            transition: 0.15s;
         }
         .input-field:focus {
             outline: none;
@@ -138,11 +141,11 @@
             box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
         }
         .divider {
-            margin: 24px 0 20px;
+            margin: 20px 0 16px;
             border-top: 1px solid var(--border-light);
         }
         .divisors-container {
-            margin: 20px 0 20px;
+            margin: 16px 0 20px;
         }
         .divisor-item {
             display: flex;
@@ -152,30 +155,34 @@
             flex-wrap: wrap;
         }
         .divisor-item label {
-            width: 100px;
+            width: 85px;
             margin-bottom: 0;
+            font-size: 0.9rem;
         }
         .divisor-item input {
             flex: 1;
-            min-width: 150px;
+            min-width: 140px;
         }
         .buttons-row {
             display: flex;
             gap: 12px;
-            margin: 10px 0 15px;
-            flex-wrap: wrap;
+            margin: 10px 0 16px;
         }
         .action-btn {
             background: var(--btn-secondary);
             color: var(--btn-secondary-text);
             border: none;
-            padding: 10px 18px;
+            padding: 12px 16px;
             font-weight: 600;
-            border-radius: 40px;
+            border-radius: 44px;
             cursor: pointer;
             font-size: 0.9rem;
             flex: 1;
             text-align: center;
+            transition: 0.1s;
+        }
+        .action-btn:active {
+            transform: scale(0.97);
         }
         .action-btn.primary {
             background: var(--btn-primary);
@@ -189,72 +196,82 @@
             background: var(--btn-primary);
             color: white;
             border: none;
-            padding: 14px 24px;
-            font-size: 1rem;
+            padding: 16px 20px;
+            font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 40px;
+            border-radius: 44px;
             width: 100%;
             cursor: pointer;
-            margin-top: 12px;
+            margin-top: 8px;
+            transition: 0.1s;
+        }
+        .calc-btn:active {
+            transform: scale(0.98);
         }
         .results, .history {
-            margin-top: 32px;
+            margin-top: 28px;
             background: var(--result-bg);
             border-radius: 24px;
             overflow: hidden;
         }
         .result-header, .history-header {
             font-weight: 600;
-            padding: 12px 20px;
+            padding: 14px 18px;
             border-bottom: 1px solid var(--result-border);
             color: var(--text-primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.95rem;
         }
         .result-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px;
+            padding: 12px 18px;
             border-bottom: 1px solid var(--result-border);
             font-family: monospace;
+            font-size: 0.95rem;
             flex-wrap: wrap;
             gap: 8px;
         }
         .quotient {
             font-weight: 600;
             background: var(--quotient-bg);
-            padding: 4px 12px;
-            border-radius: 36px;
+            padding: 6px 14px;
+            border-radius: 40px;
             color: var(--quotient-text);
+            word-break: break-word;
         }
         .rejected {
             background: var(--rejected-bg);
             color: var(--rejected-text);
             font-weight: 500;
-            padding: 4px 12px;
-            border-radius: 36px;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
         }
         .history-list {
-            max-height: 300px;
+            max-height: 320px;
             overflow-y: auto;
         }
         .history-item {
-            padding: 12px 20px;
+            padding: 14px 18px;
             border-bottom: 1px solid var(--result-border);
             cursor: pointer;
             transition: background 0.1s;
             color: var(--text-primary);
         }
-        .history-item:hover {
+        .history-item:active {
             background: var(--history-item-hover);
         }
-        .history-item .history-dividend {
+        .history-dividend {
             font-weight: 700;
+            font-size: 0.95rem;
+            word-break: break-word;
         }
-        .history-item .history-details {
-            font-size: 0.8rem;
+        .history-details {
+            font-size: 0.7rem;
             color: var(--text-secondary);
             margin-top: 4px;
         }
@@ -263,73 +280,123 @@
             border: none;
             color: var(--danger-text);
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 30px;
+        }
+        .clear-history:active {
+            background: var(--rejected-bg);
         }
         .info-note {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
             text-align: center;
-            margin-top: 24px;
-            padding-top: 18px;
+            margin-top: 20px;
+            padding-top: 14px;
             border-top: 1px solid var(--border-light);
         }
         footer {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 16px;
             color: var(--text-secondary);
         }
-        @media (max-width: 550px) {
-            .card { padding: 20px 16px; }
-            .divisor-item { flex-direction: column; align-items: stretch; }
-            .divisor-item label { width: auto; margin-bottom: 4px; }
+        /* Мобильная оптимизация: на узких экранах убираем фиксированную ширину label */
+        @media (max-width: 500px) {
+            .card {
+                padding: 16px;
+            }
+            .divisor-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+                margin-bottom: 18px;
+            }
+            .divisor-item label {
+                width: auto;
+                margin-bottom: 2px;
+            }
+            .buttons-row {
+                gap: 10px;
+            }
+            .action-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            .calc-btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
+            .result-header, .history-header {
+                padding: 12px 14px;
+            }
+            .result-row {
+                padding: 10px 14px;
+            }
+        }
+        /* Для очень маленьких экранов уменьшаем шрифт */
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+            .quotient, .rejected {
+                font-size: 0.8rem;
+                padding: 4px 10px;
+            }
+        }
+        /* Увеличенные области для тач-элементов */
+        button, .action-btn, .calc-btn, .theme-toggle, .clear-history {
+            touch-action: manipulation;
+        }
+        input {
+            font-size: 16px; /* предотвращает масштабирование на iOS при фокусе */
         }
     </style>
 </head>
 <body>
 <div class="card">
     <div class="header">
-        <h1>➕➖ Гибкое деление</h1>
+        <h1>🧮 Деление ≤3 знаков</h1>
         <button class="theme-toggle" id="themeToggle" aria-label="Тёмная тема">🌙</button>
     </div>
-    <div class="sub">Показываются только результаты с <strong>≤ 3 цифрами после запятой</strong> (без округления). Добавляйте/удаляйте делители, сохраняйте историю.</div>
+    <div class="sub">✅ Показываются только результаты с <strong>0–3 цифрами после запятой</strong> (без округления). Делители можно добавлять/удалять.</div>
 
     <label for="dividend">Делимое</label>
-    <input type="number" id="dividend" class="input-field" placeholder="Число" step="any" value="100">
+    <input type="number" id="dividend" class="input-field" placeholder="Число" step="any" value="100" inputmode="decimal">
 
     <div class="divider"></div>
     <div class="divisors-container" id="divisorsContainer"></div>
 
     <div class="buttons-row">
-        <button id="addDivisorBtn" class="action-btn">➕ Добавить делитель</button>
-        <button id="removeDivisorBtn" class="action-btn danger">➖ Удалить последний</button>
+        <button id="addDivisorBtn" class="action-btn">➕ Добавить</button>
+        <button id="removeDivisorBtn" class="action-btn danger">➖ Удалить</button>
     </div>
-    <button id="calcBtn" class="calc-btn">🧮 Вычислить результаты</button>
+    <button id="calcBtn" class="calc-btn">⚡ Вычислить</button>
 
     <div class="results" id="resultsArea">
         <div class="result-header">📊 Результаты</div>
         <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нажмите «Вычислить»</div>
     </div>
 
-    <div class="history" id="historyArea">
+    <div class="history">
         <div class="history-header">
-            📜 История вычислений
-            <button id="clearHistoryBtn" class="clear-history">Очистить всё</button>
+            📜 История
+            <button id="clearHistoryBtn" class="clear-history">Очистить</button>
         </div>
         <div id="historyList" class="history-list">
             <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>
         </div>
     </div>
     <div class="info-note">
-        ⚡ Клик по записи истории — восстановит делимое и делители, автоматически пересчитает.<br>
-        🌓 Переключатель темы сохраняется в памяти браузера.
+        👆 Клик по записи истории — восстановит все данные и пересчитает.<br>
+        🌓 Тёмная тема и история сохраняются в браузере.
     </div>
-    <footer>динамические делители • проверка до 3 знаков • история в localStorage</footer>
+    <footer>динамические делители • обрезка до 3 знаков • адаптация под телефон</footer>
 </div>
 
 <script>
-    // ---------- Утилиты для работы с дробной частью ----------
+    // ---------- Вспомогательные функции ----------
     function getDecimalPlacesCount(num) {
         if (isNaN(num)) return -1;
         let absNum = Math.abs(num);
@@ -349,20 +416,24 @@
         return str;
     }
 
-    // ---------- Управление делителями ----------
-    let currentDivisorIds = [];
+    // ---------- DOM элементы ----------
     const container = document.getElementById('divisorsContainer');
     const addBtn = document.getElementById('addDivisorBtn');
     const removeBtn = document.getElementById('removeDivisorBtn');
     const calcBtn = document.getElementById('calcBtn');
     const dividendInput = document.getElementById('dividend');
     const resultsDiv = document.getElementById('resultsArea');
+    const historyListDiv = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+    // ---------- Управление делителями ----------
+    let currentDivisorIds = []; // не особо используется, но для порядка
 
     function refreshDivisorLabels() {
         const items = container.querySelectorAll('.divisor-item');
         items.forEach((item, idx) => {
             const label = item.querySelector('label');
-            if (label) label.innerHTML = `🔹 Делитель ${idx + 1}`;
+            if (label) label.innerHTML = `📌 Делитель ${idx + 1}`;
         });
     }
 
@@ -374,8 +445,8 @@
         const id = `div_${Date.now()}_${newIndex}`;
         wrapper.setAttribute('data-id', id);
         wrapper.innerHTML = `
-            <label>🔹 Делитель ${newIndex}</label>
-            <input type="number" class="input-field divisor-input" step="any" value="${value}" placeholder="Число">
+            <label>📌 Делитель ${newIndex}</label>
+            <input type="number" class="input-field divisor-input" step="any" value="${value}" placeholder="Число" inputmode="decimal">
         `;
         container.appendChild(wrapper);
         currentDivisorIds.push(id);
@@ -408,17 +479,16 @@
     }
 
     function setDivisorsFromArray(divisorsArray) {
-        // Очищаем и создаём нужное количество полей
         container.innerHTML = '';
         currentDivisorIds = [];
         for (let i = 0; i < divisorsArray.length; i++) {
             const wrapper = document.createElement('div');
             wrapper.className = 'divisor-item';
-            const id = `div_restore_${Date.now()}_${i}`;
+            const id = `div_set_${Date.now()}_${i}`;
             wrapper.setAttribute('data-id', id);
             wrapper.innerHTML = `
-                <label>🔹 Делитель ${i+1}</label>
-                <input type="number" class="input-field divisor-input" step="any" value="${divisorsArray[i]}" placeholder="Число">
+                <label>📌 Делитель ${i+1}</label>
+                <input type="number" class="input-field divisor-input" step="any" value="${divisorsArray[i]}" placeholder="Число" inputmode="decimal">
             `;
             container.appendChild(wrapper);
             currentDivisorIds.push(id);
@@ -426,7 +496,7 @@
         refreshDivisorLabels();
     }
 
-    // ---------- Вычисление и отображение результатов ----------
+    // ---------- Вычисление и отображение ----------
     function calculateAndReturnResults() {
         const dividend = parseFloat(dividendInput.value);
         if (isNaN(dividend)) return { error: 'Введите корректное делимое', resultsHtml: null, rawResults: null };
@@ -440,7 +510,7 @@
         for (let i = 0; i < divisors.length; i++) {
             const divisor = divisors[i];
             if (divisor === 0) {
-                resultsHtml += `<div class="result-row"><span class="divisor-label">Делитель ${i+1} = 0</span><span class="rejected">⚠️ деление на ноль</span></div>`;
+                resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="rejected">⚠️ деление на ноль</span></div>`;
                 rawResults.push({ divisor, quotient: null, decimalCount: null, status: 'zero' });
                 continue;
             }
@@ -451,7 +521,7 @@
                 resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="quotient">${formatted}</span></div>`;
                 rawResults.push({ divisor, quotient: formatted, decimalCount, status: 'ok' });
             } else {
-                resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="rejected">❌ больше 3 знаков (${decimalCount})</span></div>`;
+                resultsHtml += `<div class="result-row"><span class="divisor-label">${divisor}</span><span class="rejected">❌ >3 знаков (${decimalCount})</span></div>`;
                 rawResults.push({ divisor, quotient: null, decimalCount, status: 'too_many' });
             }
         }
@@ -461,20 +531,18 @@
     function calculateAndDisplay() {
         const res = calculateAndReturnResults();
         if (res.error) {
-            resultsDiv.innerHTML = `<div class="error-msg" style="color:var(--danger-text);background:var(--rejected-bg);padding:12px;margin:16px;">⚠️ ${res.error}</div>`;
+            resultsDiv.innerHTML = `<div class="error-msg" style="color:var(--danger-text);background:var(--rejected-bg);padding:12px;margin:16px;border-radius:20px;">⚠️ ${res.error}</div>`;
             return;
         }
         resultsDiv.innerHTML = res.resultsHtml;
-        // Сохраняем в историю
-        if (res.rawResults) {
-            saveToHistory(res.dividend, res.divisors, res.rawResults);
-        }
+        // Сохраняем в историю (локальную)
+        saveToLocalHistory(res.dividend, res.divisors, res.rawResults);
     }
 
     // ---------- История (localStorage) ----------
-    let history = []; // массив объектов: { dividend, divisorsArray, resultsArray, timestamp }
+    let history = [];
 
-    function loadHistoryFromStorage() {
+    function loadHistoryFromLocal() {
         const stored = localStorage.getItem('divisionHistory');
         if (stored) {
             try {
@@ -487,30 +555,27 @@
         renderHistory();
     }
 
-    function saveHistoryToStorage() {
+    function saveHistoryToLocal() {
         localStorage.setItem('divisionHistory', JSON.stringify(history));
     }
 
-    function saveToHistory(dividend, divisors, results) {
-        // results: массив объектов с полями divisor, quotient, decimalCount, status
+    function saveToLocalHistory(dividend, divisors, results) {
         const historyItem = {
             dividend: dividend,
             divisorsArray: [...divisors],
             resultsArray: results.map(r => ({ divisor: r.divisor, status: r.status, quotient: r.quotient })),
             timestamp: Date.now()
         };
-        history.unshift(historyItem); // новые сверху
-        // Ограничим 20 записями
+        history.unshift(historyItem);
         if (history.length > 20) history = history.slice(0, 20);
-        saveHistoryToStorage();
+        saveHistoryToLocal();
         renderHistory();
     }
 
     function renderHistory() {
-        const historyContainer = document.getElementById('historyList');
-        if (!historyContainer) return;
+        if (!historyListDiv) return;
         if (history.length === 0) {
-            historyContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>';
+            historyListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">Нет сохранённых расчётов</div>';
             return;
         }
         let html = '';
@@ -525,32 +590,33 @@
                 </div>
             `;
         }
-        historyContainer.innerHTML = html;
-        // добавить обработчики
+        historyListDiv.innerHTML = html;
+        // Вешаем обработчики
         document.querySelectorAll('.history-item').forEach(el => {
-            el.addEventListener('click', (e) => {
-                const idx = el.getAttribute('data-history-index');
-                if (idx !== null) restoreFromHistory(parseInt(idx));
-            });
+            el.removeEventListener('click', handleHistoryClick);
+            el.addEventListener('click', handleHistoryClick);
         });
     }
 
-    function restoreFromHistory(index) {
-        const item = history[index];
-        if (!item) return;
-        dividendInput.value = item.dividend;
-        setDivisorsFromArray(item.divisorsArray);
-        // После восстановления автоматически пересчитываем
-        calculateAndDisplay();
+    function handleHistoryClick(e) {
+        const idx = this.getAttribute('data-history-index');
+        if (idx !== null && history[idx]) {
+            const item = history[idx];
+            dividendInput.value = item.dividend;
+            setDivisorsFromArray(item.divisorsArray);
+            calculateAndDisplay(); // автоматический пересчёт
+        }
     }
 
-    function clearHistory() {
-        history = [];
-        saveHistoryToStorage();
-        renderHistory();
+    function clearLocalHistory() {
+        if (confirm('Очистить всю историю?')) {
+            history = [];
+            saveHistoryToLocal();
+            renderHistory();
+        }
     }
 
-    // ---------- Тёмная тема (localStorage) ----------
+    // ---------- Тёмная тема ----------
     const themeToggle = document.getElementById('themeToggle');
     function setTheme(theme) {
         if (theme === 'dark') {
@@ -572,21 +638,22 @@
     else setTheme('light');
     themeToggle.addEventListener('click', toggleTheme);
 
-    // ---------- Инициализация по умолчанию: 5 делителей со значениями 2,3,4,5,8 ----------
+    // ---------- Инициализация по умолчанию (5 делителей) ----------
     function initDefaultDivisors() {
-        const defaults = [2,3,4,5,8];
+        const defaults = [2, 3, 4, 5, 8];
         setDivisorsFromArray(defaults);
     }
 
-    // События
+    // ---------- События ----------
     addBtn.addEventListener('click', () => addDivisor(2));
     removeBtn.addEventListener('click', removeLastDivisor);
     calcBtn.addEventListener('click', calculateAndDisplay);
-    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+    clearHistoryBtn.addEventListener('click', clearLocalHistory);
     dividendInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') calculateAndDisplay(); });
 
+    // Запуск
     initDefaultDivisors();
-    loadHistoryFromStorage();
+    loadHistoryFromLocal();
 </script>
 </body>
 </html>
