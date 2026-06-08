@@ -3,379 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Крупный калькулятор деления</title>
+    <title>Калькулятор деления — крупный интерфейс</title>
     <style>
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
         :root {
-            --bg-body: #eef2f8;
+            --bg-body: #eef2f5;
             --card-bg: #ffffff;
-            --panel-bg: #f8fafc;
-            --text: #0f172a;
-            --text-light: #475569;
-            --border: #cbd5e1;
+            --text: #1e2a3a;
+            --text-light: #5a6e7c;
+            --border: #dce5ec;
             --input-bg: #ffffff;
             --primary: #2c7da0;
-            --primary-dark: #1f5e7a;
-            --success: #2e8b57;
             --danger: #e07a5f;
-            --danger-bg: #fee2e2;
-            --history-hover: #eef2ff;
+            --danger-bg: #fde9e5;
+            --panel-bg: #f8fafc;
+            --overlay-bg: rgba(0,0,0,0.4);
         }
         body.dark {
             --bg-body: #0f172a;
             --card-bg: #1e293b;
-            --panel-bg: #0f172a;
             --text: #f1f5f9;
-            --text-light: #94a3b8;
+            --text-light: #cbd5e1;
             --border: #334155;
             --input-bg: #0f172a;
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
+            --primary: #60a5fa;
             --danger: #f87171;
             --danger-bg: #451a1a;
-            --history-hover: #334155;
+            --panel-bg: #0f172a;
+            --overlay-bg: rgba(0,0,0,0.7);
         }
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-body);
             margin: 0;
             min-height: 100vh;
-            padding: 20px;
             transition: background 0.2s;
         }
-        /* Двухколоночный контейнер */
-        .dashboard {
-            max-width: 1400px;
-            margin: 0 auto;
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 36px;
             display: flex;
-            gap: 28px;
-            align-items: flex-start;
-            flex-wrap: wrap;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 200;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        /* Левая панель: делители + история */
-        .sidebar {
-            flex: 1.2;
-            min-width: 280px;
+        .menu-btn span {
+            width: 28px;
+            height: 4px;
+            background: var(--text);
+            border-radius: 4px;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.2s;
+        }
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 85%;
+            max-width: 440px;
+            height: 100%;
             background: var(--card-bg);
-            border-radius: 48px;
-            padding: 24px 20px 28px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            transition: background 0.2s;
+            z-index: 201;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 24px 24px;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.2);
         }
-        /* Правая панель: делимое и результаты */
-        .main-area {
-            flex: 2;
-            min-width: 300px;
-            background: var(--card-bg);
-            border-radius: 48px;
-            padding: 28px 28px 36px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            transition: background 0.2s;
+        .side-panel.open {
+            transform: translateX(0);
         }
-        .section-title {
-            font-size: 1.4rem;
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .panel-header span {
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 20px;
+        }
+        .close-panel {
+            background: var(--danger-bg);
+            border: none;
+            font-size: 1.8rem;
+            width: 56px;
+            height: 56px;
+            border-radius: 40px;
+            cursor: pointer;
+            color: var(--danger);
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-left: 5px solid var(--primary);
-            padding-left: 16px;
+            justify-content: center;
         }
-        .divisors-control {
-            margin-bottom: 32px;
+        .section {
+            margin-bottom: 36px;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text);
+            border-left: 6px solid var(--primary);
+            padding-left: 16px;
         }
         .divisors-list {
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            margin-bottom: 20px;
-            max-height: 320px;
-            overflow-y: auto;
-            padding-right: 8px;
+            gap: 18px;
+            margin-bottom: 24px;
         }
         .divisor-row {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             background: var(--panel-bg);
-            border-radius: 60px;
-            padding: 6px 10px 6px 20px;
+            border-radius: 80px;
+            padding: 8px 16px 8px 24px;
             border: 1px solid var(--border);
         }
-        .divisor-row .div-num {
+        .divisor-row .label {
             font-weight: 600;
+            min-width: 100px;
+            font-size: 1.2rem;
             color: var(--text-light);
-            min-width: 85px;
-            font-size: 1rem;
         }
         .divisor-row input {
             flex: 1;
             padding: 14px 12px;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             border: none;
             background: transparent;
             color: var(--text);
             font-family: monospace;
-            font-weight: 500;
+            text-align: right;
         }
         .divisor-row input:focus { outline: none; }
         .remove-div {
             background: var(--danger-bg);
             border: none;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             cursor: pointer;
             color: var(--danger);
-            width: 44px;
-            height: 44px;
+            width: 52px;
+            height: 52px;
             border-radius: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
+            flex-shrink: 0;
         }
-        .remove-div:active { opacity: 0.7; }
-        
         .action-buttons {
             display: flex;
-            gap: 14px;
-            margin-top: 12px;
+            gap: 16px;
         }
-        .btn {
+        .btn-sm {
             background: var(--panel-bg);
             border: 1px solid var(--border);
-            padding: 14px 18px;
+            padding: 14px 20px;
             border-radius: 60px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.2rem;
             cursor: pointer;
-            color: var(--text);
             flex: 1;
             text-align: center;
-            transition: 0.05s linear;
+            color: var(--text);
         }
-        .btn.primary {
+        .btn-sm.primary {
             background: var(--primary);
             color: white;
             border: none;
         }
-        .btn.danger {
-            background: var(--danger-bg);
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-        .btn:active { transform: scale(0.97); }
-        
-        /* Блок истории */
-        .history-container {
-            margin-top: 28px;
-            border-top: 2px solid var(--border);
-            padding-top: 20px;
-        }
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .history-header h3 {
-            font-size: 1.2rem;
-            margin: 0;
-            color: var(--text);
-        }
-        .clear-history {
-            background: none;
-            border: none;
-            color: var(--danger);
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 8px 12px;
-        }
         .history-list {
-            max-height: 280px;
+            max-height: 360px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
         .history-item {
             background: var(--panel-bg);
-            border-radius: 28px;
-            padding: 14px 18px;
+            border-radius: 32px;
+            padding: 16px 20px;
             cursor: pointer;
-            transition: 0.05s;
             border: 1px solid var(--border);
         }
-        .history-item:active { background: var(--history-hover); }
+        .history-item:active { background: var(--danger-bg); }
         .history-main {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1rem;
             word-break: break-word;
+            color: var(--text);
         }
         .history-date {
-            font-size: 0.7rem;
+            font-size: 0.8rem;
             color: var(--text-light);
-            margin-top: 6px;
+            margin-top: 8px;
         }
-        
-        /* Правая область: делимое и результаты */
-        .dividend-block {
-            margin-bottom: 36px;
-        }
-        .dividend-block label {
-            font-size: 1.2rem;
+        .clear-history {
+            background: var(--danger-bg);
+            border: none;
+            color: var(--danger);
+            font-size: 1rem;
+            margin-top: 20px;
+            cursor: pointer;
             font-weight: 600;
-            color: var(--text);
+            padding: 14px 20px;
+            border-radius: 60px;
+            width: 100%;
+            text-align: center;
+        }
+        .main-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 100px 24px 60px;
+        }
+        .dividend-area {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .dividend-area label {
             display: block;
-            margin-bottom: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text);
         }
         .big-input {
             width: 100%;
-            padding: 24px 22px;
-            font-size: 2rem;
-            font-weight: 600;
-            border: 2px solid var(--border);
-            border-radius: 48px;
+            padding: 28px 24px;
+            font-size: 2.4rem;
+            font-weight: 700;
+            text-align: center;
+            border: 3px solid var(--border);
+            border-radius: 80px;
             background: var(--input-bg);
             color: var(--text);
             font-family: monospace;
-            text-align: center;
         }
         .big-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(44,125,160,0.2);
         }
-        
-        .results-block {
-            background: var(--panel-bg);
-            border-radius: 40px;
-            padding: 8px 0;
+        .results-area {
+            background: var(--card-bg);
+            border-radius: 56px;
+            padding: 12px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
         }
-        .results-title {
-            font-size: 1.3rem;
+        .result-header {
+            font-size: 1.5rem;
             font-weight: 700;
-            padding: 20px 24px 12px;
+            padding: 24px 28px 16px;
             color: var(--text);
         }
         .result-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 18px 24px;
-            border-top: 1px solid var(--border);
-            font-size: 1.1rem;
+            padding: 18px 28px;
+            border-top: 2px solid var(--border);
         }
-        .divisor-value {
-            font-weight: 600;
+        .divisor-val {
+            font-weight: 700;
+            font-size: 1.5rem;
             color: var(--text);
-            font-size: 1.2rem;
         }
         .result-badge {
             background: var(--primary);
             color: white;
-            padding: 8px 24px;
-            border-radius: 60px;
+            padding: 10px 28px;
+            border-radius: 80px;
             font-weight: 700;
+            font-size: 1.5rem;
             font-family: monospace;
-            font-size: 1.2rem;
         }
         .result-badge.reject {
             background: var(--danger-bg);
             color: var(--danger);
+            font-size: 1.2rem;
         }
-        .empty-results {
-            padding: 40px;
-            text-align: center;
-            color: var(--text-light);
-            font-size: 1rem;
-        }
-        .theme-toggle {
+        .theme-fab {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: 28px;
+            right: 28px;
             background: var(--card-bg);
-            border: 1px solid var(--border);
-            width: 56px;
-            height: 56px;
-            border-radius: 40px;
-            font-size: 1.6rem;
-            cursor: pointer;
+            border: 2px solid var(--border);
+            width: 64px;
+            height: 64px;
+            border-radius: 50px;
+            font-size: 1.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
             z-index: 100;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            color: var(--text);
         }
-        @media (max-width: 800px) {
-            body { padding: 12px; }
-            .dashboard { flex-direction: column; gap: 20px; }
-            .big-input { font-size: 1.6rem; padding: 18px; }
-            .result-badge { font-size: 1rem; padding: 6px 18px; }
-            .divisor-row input { font-size: 1rem; }
-        }
-        @media (max-width: 480px) {
-            .big-input { font-size: 1.3rem; padding: 14px; }
-            .result-item { padding: 14px 16px; }
-            .divisor-value { font-size: 1rem; }
+        @media (max-width: 600px) {
+            .main-content { padding: 80px 16px 40px; }
+            .big-input { font-size: 1.8rem; padding: 20px; }
+            .result-header { font-size: 1.2rem; padding: 18px 20px 10px; }
+            .result-item { padding: 14px 20px; }
+            .divisor-val { font-size: 1.3rem; }
+            .result-badge { font-size: 1.2rem; padding: 6px 18px; }
+            .side-panel { max-width: 90%; padding: 24px 16px; }
+            .section-title { font-size: 1.3rem; }
+            .divisor-row .label { font-size: 1rem; min-width: 85px; }
+            .divisor-row input { font-size: 1rem; padding: 12px 8px; }
+            .btn-sm { font-size: 1rem; padding: 12px 16px; }
+            .remove-div { width: 44px; height: 44px; font-size: 1.2rem; }
+            .clear-history { padding: 12px 16px; font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
-<div class="dashboard">
-    <!-- Левая панель: делители и история -->
-    <div class="sidebar">
-        <div class="section-title">📌 Делители</div>
-        <div class="divisors-control">
+    <div class="menu-btn" id="menuBtn">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="side-panel" id="sidePanel">
+        <div class="panel-header">
+            <span>⚙️ Меню</span>
+            <button class="close-panel" id="closePanelBtn">✕</button>
+        </div>
+        <div class="section">
+            <div class="section-title">📌 Делители</div>
             <div id="divisorsList" class="divisors-list"></div>
             <div class="action-buttons">
-                <button id="addDivBtn" class="btn primary">➕ Добавить</button>
-                <button id="removeLastBtn" class="btn danger">➖ Удалить</button>
+                <button id="addDivBtn" class="btn-sm primary">➕ Добавить</button>
+                <button id="removeLastBtn" class="btn-sm">➖ Удалить</button>
             </div>
         </div>
-        
-        <div class="history-container">
-            <div class="history-header">
-                <h3>📜 История</h3>
-                <button id="clearHistoryBtn" class="clear-history">Очистить всё</button>
-            </div>
+        <div class="section">
+            <div class="section-title">📜 История</div>
             <div id="historyList" class="history-list">
-                <div style="padding: 20px; text-align: center; color: var(--text-light);">Нет расчётов</div>
+                <div style="padding: 20px; text-align: center;">Нет расчётов</div>
             </div>
+            <button id="clearHistoryBtn" class="clear-history">Очистить всё</button>
         </div>
     </div>
-    
-    <!-- Правая панель: делимое и результаты -->
-    <div class="main-area">
-        <div class="dividend-block">
+    <div class="main-content">
+        <div class="dividend-area">
             <label>🔢 Делимое</label>
             <input type="number" id="dividend" class="big-input" value="100" step="any" placeholder="Число">
         </div>
-        <div class="results-block">
-            <div class="results-title">📊 Результаты (≤3 знаков)</div>
+        <div class="results-area">
+            <div class="result-header">📊 Результаты (≤3 знаков)</div>
             <div id="resultsContainer">
-                <div class="empty-results">Введите данные — расчёт мгновенный</div>
+                <div style="padding: 40px; text-align: center; font-size: 1.2rem; color: var(--text-light);">Введите данные — расчёт мгновенный</div>
             </div>
         </div>
     </div>
-</div>
-<button id="themeToggle" class="theme-toggle">🌙</button>
+    <div class="theme-fab" id="themeToggle">🌙</div>
 
 <script>
-    // ---------- Вспомогательные функции ----------
+    // ---- вспомогательные функции ----
     function getDecimalCount(num) {
         if (isNaN(num)) return -1;
-        let abs = Math.abs(num);
-        let frac = abs - Math.floor(abs);
+        let frac = Math.abs(num) - Math.floor(Math.abs(num));
         if (frac < 1e-12) return 0;
-        let str = frac.toString();
-        str = str.replace(/^0\./, '');
+        let str = frac.toString().replace(/^0\./, '');
         if (str.includes('e')) return 10;
         return str.length;
     }
@@ -385,7 +404,7 @@
         return s;
     }
     
-    // ---------- DOM ----------
+    // ---- DOM ----
     const dividendInput = document.getElementById('dividend');
     const divisorsContainer = document.getElementById('divisorsList');
     const addBtn = document.getElementById('addDivBtn');
@@ -393,22 +412,27 @@
     const resultsContainer = document.getElementById('resultsContainer');
     const historyListDiv = document.getElementById('historyList');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    let divisorValues = [2, 3, 4, 5, 8];
+    const menuBtn = document.getElementById('menuBtn');
+    const overlay = document.getElementById('overlay');
+    const sidePanel = document.getElementById('sidePanel');
+    const closePanelBtn = document.getElementById('closePanelBtn');
     
-    // ---------- Отрисовка списка делителей ----------
+    let divisorValues = [18, 16, 13, 11];
+    
+    // ---- рендер делителей ----
     function renderDivisors() {
         divisorsContainer.innerHTML = '';
         divisorValues.forEach((val, idx) => {
             const row = document.createElement('div');
             row.className = 'divisor-row';
             row.innerHTML = `
-                <span class="div-num">Делитель ${idx+1}</span>
-                <input type="number" class="div-input" value="${val}" step="any" placeholder="Число">
+                <span class="label">Делитель ${idx+1}</span>
+                <input type="number" class="divisor-input" value="${val}" step="any" placeholder="Число">
                 <button class="remove-div" data-index="${idx}">✕</button>
             `;
-            const input = row.querySelector('.div-input');
-            input.addEventListener('input', (e) => {
-                let newVal = parseFloat(e.target.value);
+            const input = row.querySelector('.divisor-input');
+            input.addEventListener('input', () => {
+                let newVal = parseFloat(input.value);
                 if (!isNaN(newVal)) divisorValues[idx] = newVal;
                 else divisorValues[idx] = 0;
                 autoCalculate();
@@ -427,6 +451,7 @@
             divisorsContainer.appendChild(row);
         });
     }
+    
     function addDivisor() {
         divisorValues.push(2);
         renderDivisors();
@@ -442,12 +467,12 @@
         autoCalculate();
     }
     
-    // ---------- Расчёт и отображение результатов ----------
-    function computeAndRender() {
+    // ---- вычисление и отображение ----
+    function autoCalculate() {
         const dividend = parseFloat(dividendInput.value);
         if (isNaN(dividend)) {
-            resultsContainer.innerHTML = '<div class="empty-results">⚠️ Введите число в делимое</div>';
-            return { error: true };
+            resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Введите число</div>';
+            return;
         }
         let valid = true;
         const divs = [];
@@ -456,15 +481,14 @@
             divs.push(v);
         }
         if (!valid) {
-            resultsContainer.innerHTML = '<div class="empty-results">⚠️ Проверьте делители</div>';
-            return { error: true };
+            resultsContainer.innerHTML = '<div style="padding:40px;text-align:center;color:var(--danger);">⚠️ Проверьте делители</div>';
+            return;
         }
         let html = '';
         const rawResults = [];
-        for (let i=0; i<divs.length; i++) {
-            const d = divs[i];
+        for (let d of divs) {
             if (d === 0) {
-                html += `<div class="result-item"><span class="divisor-value">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
+                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
                 rawResults.push({ divisor: d, status: 'zero' });
                 continue;
             }
@@ -472,95 +496,73 @@
             const dec = getDecimalCount(q);
             if (dec <= 3) {
                 const formatted = formatNumber(q);
-                html += `<div class="result-item"><span class="divisor-value">${d}</span><span class="result-badge">${formatted}</span></div>`;
-                rawResults.push({ divisor: d, status: 'ok', value: formatted });
+                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge">${formatted}</span></div>`;
+                rawResults.push({ divisor: d, status: 'ok' });
             } else {
-                html += `<div class="result-item"><span class="divisor-value">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
+                html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
                 rawResults.push({ divisor: d, status: 'too_many' });
             }
         }
-        if (html === '') html = '<div class="empty-results">Нет результатов</div>';
+        if (html === '') html = '<div style="padding:40px;text-align:center;">Нет результатов</div>';
         resultsContainer.innerHTML = html;
-        return { dividend, divisors: divs, rawResults };
+        saveToHistory(dividend, divs, rawResults);
     }
     
-    function autoCalculate() {
-        const res = computeAndRender();
-        if (!res.error && res.dividend !== undefined) {
-            saveToHistory(res.dividend, res.divisors, res.rawResults);
-        }
-    }
-    
-    // ---------- История (localStorage) ----------
+    // ---- история (localStorage) ----
     let history = [];
     function loadHistory() {
         const stored = localStorage.getItem('bigDivisionHistory');
-        if (stored) {
-            try {
-                history = JSON.parse(stored);
-                if (!Array.isArray(history)) history = [];
-            } catch(e) { history = []; }
-        } else history = [];
+        history = stored ? JSON.parse(stored) : [];
         renderHistory();
     }
-    function saveHistory() {
-        localStorage.setItem('bigDivisionHistory', JSON.stringify(history.slice(0, 20)));
-    }
-    function saveToHistory(dividend, divisors, resultsArray) {
-        const newItem = {
-            dividend,
-            divisors: [...divisors],
-            results: resultsArray.map(r => ({ divisor: r.divisor, status: r.status, value: r.value || null })),
-            timestamp: Date.now()
-        };
-        history.unshift(newItem);
-        if (history.length > 20) history = history.slice(0, 20);
+    function saveHistory() { localStorage.setItem('bigDivisionHistory', JSON.stringify(history.slice(0,20))); }
+    function saveToHistory(dividend, divisors, results) {
+        history.unshift({ dividend, divisors, results: results.map(r=>r.status), timestamp: Date.now() });
+        if (history.length > 20) history.pop();
         saveHistory();
         renderHistory();
     }
     function renderHistory() {
         if (!historyListDiv) return;
-        if (history.length === 0) {
-            historyListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-light);">Нет расчётов</div>';
-            return;
-        }
+        if (!history.length) { historyListDiv.innerHTML = '<div style="padding:20px;text-align:center;">Нет расчётов</div>'; return; }
         let html = '';
-        for (let i=0; i<history.length; i++) {
-            const item = history[i];
+        history.forEach((item,i) => {
             const date = new Date(item.timestamp).toLocaleString();
-            const okCount = item.results.filter(r => r.status === 'ok').length;
-            html += `
-                <div class="history-item" data-idx="${i}">
-                    <div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div>
-                    <div class="history-date">${date} • успешных: ${okCount}</div>
-                </div>
-            `;
-        }
+            const okCount = item.results.filter(s=>s==='ok').length;
+            html += `<div class="history-item" data-idx="${i}"><div class="history-main">${item.dividend} ÷ [${item.divisors.join(', ')}]</div><div class="history-date">${date} • успешных: ${okCount}</div></div>`;
+        });
         historyListDiv.innerHTML = html;
         document.querySelectorAll('.history-item').forEach(el => {
             el.addEventListener('click', (e) => {
-                const idx = parseInt(el.getAttribute('data-idx'));
-                if (!isNaN(idx) && history[idx]) {
-                    restoreFromHistory(history[idx]);
+                const idx = el.dataset.idx;
+                if (history[idx]) {
+                    dividendInput.value = history[idx].dividend;
+                    divisorValues = [...history[idx].divisors];
+                    renderDivisors();
+                    autoCalculate();
+                    closeMenu();
                 }
             });
         });
     }
-    function restoreFromHistory(item) {
-        dividendInput.value = item.dividend;
-        divisorValues = [...item.divisors];
-        renderDivisors();
-        autoCalculate();
-    }
-    function clearHistory() {
-        if (confirm('Очистить всю историю?')) {
-            history = [];
-            saveHistory();
-            renderHistory();
-        }
-    }
+    function clearHistory() { if(confirm('Очистить историю?')) { history=[]; saveHistory(); renderHistory(); } }
     
-    // ---------- Тёмная тема ----------
+    // ---- меню ----
+    function openMenu() {
+        sidePanel.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+        sidePanel.classList.remove('open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    menuBtn.addEventListener('click', openMenu);
+    overlay.addEventListener('click', closeMenu);
+    closePanelBtn.addEventListener('click', closeMenu);
+    
+    // ---- тёмная тема ----
     const themeBtn = document.getElementById('themeToggle');
     function setTheme(theme) {
         if (theme === 'dark') {
@@ -573,16 +575,11 @@
             localStorage.setItem('bigTheme', 'light');
         }
     }
-    function toggleTheme() {
-        if (document.body.classList.contains('dark')) setTheme('light');
-        else setTheme('dark');
-    }
-    const savedTheme = localStorage.getItem('bigTheme');
-    if (savedTheme === 'dark') setTheme('dark');
-    else setTheme('light');
+    function toggleTheme() { document.body.classList.contains('dark') ? setTheme('light') : setTheme('dark'); }
+    if (localStorage.getItem('bigTheme') === 'dark') setTheme('dark'); else setTheme('light');
     themeBtn.addEventListener('click', toggleTheme);
     
-    // ---------- Инициализация ----------
+    // ---- инициализация ----
     dividendInput.addEventListener('input', autoCalculate);
     addBtn.addEventListener('click', addDivisor);
     removeLastBtn.addEventListener('click', removeLastDivisor);
