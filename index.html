@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>Деление с точностью до 3 знаков</title>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        /* Все стили без изменений - оставляем такие же, как в последней стабильной версии */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root {
             --bg-body: #eef2f5;
             --card-bg: #ffffff;
@@ -42,7 +40,6 @@
             min-height: 100vh;
             transition: background 0.2s;
         }
-        /* Кнопка меню */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -83,7 +80,6 @@
             opacity: 1;
             visibility: visible;
         }
-        /* Боковая панель */
         .side-panel {
             position: fixed;
             top: 0;
@@ -139,7 +135,6 @@
             border-left: 6px solid var(--primary);
             padding-left: 16px;
         }
-        /* Список делителей — строго горизонтально */
         .divisors-list {
             display: flex;
             flex-direction: column;
@@ -253,7 +248,6 @@
             width: 100%;
             text-align: center;
         }
-        /* Основной контент */
         .main-content {
             width: 100%;
             max-width: 900px;
@@ -344,7 +338,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             color: var(--text);
         }
-        /* Мобильная адаптация — сохраняем горизонтальность */
         @media (max-width: 600px) {
             .main-content { padding: 80px 16px 40px; }
             .big-input { font-size: 1.8rem; padding: 20px; }
@@ -361,7 +354,6 @@
             .remove-div { width: 40px; height: 40px; font-size: 1.1rem; }
             .clear-history { padding: 10px 16px; font-size: 0.9rem; }
         }
-        /* Для очень узких экранов — не ломаем строку, просто уменьшаем отступы */
         @media (max-width: 450px) {
             .divisor-row .label { min-width: 65px; }
             .remove-div { width: 36px; height: 36px; }
@@ -369,6 +361,7 @@
     </style>
 </head>
 <body>
+    <!-- Разметка без изменений -->
     <div class="menu-btn" id="menuBtn">
         <span></span><span></span><span></span>
     </div>
@@ -410,7 +403,7 @@
 
 <script>
     (function() {
-        // ---------- DOM ----------
+        // DOM элементы
         const dividendInput = document.getElementById('dividend');
         const divisorsContainer = document.getElementById('divisorsList');
         const addBtn = document.getElementById('addDivBtn');
@@ -423,11 +416,13 @@
         const sidePanel = document.getElementById('sidePanel');
         const closePanelBtn = document.getElementById('closePanelBtn');
         
-        // ---------- Данные ----------
+        // Данные
         let divisorValues = [18, 16, 13, 11];
         let historyArray = [];
+        let saveTimer = null;
+        let lastSavedState = null; // для сравнения, чтобы не дублировать
         
-        // ---------- Вспомогательные функции ----------
+        // Вспомогательные функции
         function getDecimalCount(num) {
             if (isNaN(num)) return -1;
             let frac = Math.abs(num) - Math.floor(Math.abs(num));
@@ -443,7 +438,66 @@
             return s;
         }
         
-        // ---------- Расчёт и отображение результатов ----------
+        // Получить текущее состояние (делимое и делители) для сравнения
+        function getCurrentState() {
+            const dividend = parseFloat(dividendInput.value);
+            if (isNaN(dividend)) return null;
+            const divs = [...divisorValues];
+            return { dividend, divisors: divs };
+        }
+        
+        // Сохранить в историю (если состояние изменилось)
+        function saveCurrentToHistory() {
+            const state = getCurrentState();
+            if (!state) return;
+            
+            // Проверяем, изменилось ли состояние по сравнению с последним сохранённым
+            if (lastSavedState) {
+                const sameDividend = lastSavedState.dividend === state.dividend;
+                const sameDivisors = JSON.stringify(lastSavedState.divisors) === JSON.stringify(state.divisors);
+                if (sameDividend && sameDivisors) return; // не сохраняем дубликат
+            }
+            
+            // Сохраняем текущие результаты (нужно сгенерировать заново)
+            const dividend = state.dividend;
+            const divs = state.divisors;
+            const resultItems = [];
+            for (let d of divs) {
+                if (d === 0) {
+                    resultItems.push({ divisor: d, status: 'zero' });
+                } else {
+                    const q = dividend / d;
+                    const dec = getDecimalCount(q);
+                    if (dec <= 3) {
+                        resultItems.push({ divisor: d, status: 'ok' });
+                    } else {
+                        resultItems.push({ divisor: d, status: 'too_many' });
+                    }
+                }
+            }
+            const newItem = {
+                dividend: dividend,
+                divisors: [...divs],
+                results: resultItems.map(r => r.status),
+                timestamp: Date.now()
+            };
+            historyArray.unshift(newItem);
+            if (historyArray.length > 20) historyArray.pop();
+            saveHistoryToStorage();
+            renderHistory();
+            lastSavedState = { dividend: state.dividend, divisors: [...state.divisors] };
+        }
+        
+        // Отложенное сохранение (debounce 3 секунды)
+        function scheduleHistorySave() {
+            if (saveTimer) clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                saveCurrentToHistory();
+                saveTimer = null;
+            }, 3000);
+        }
+        
+        // Расчёт и отображение результатов (мгновенно)
         function updateResults() {
             const dividend = parseFloat(dividendInput.value);
             if (isNaN(dividend)) {
@@ -462,11 +516,9 @@
             }
             
             let html = '';
-            const resultItems = [];
             for (let d of divs) {
                 if (d === 0) {
                     html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">⚠️ деление на 0</span></div>`;
-                    resultItems.push({ divisor: d, status: 'zero' });
                     continue;
                 }
                 const q = dividend / d;
@@ -474,18 +526,18 @@
                 if (dec <= 3) {
                     const formatted = formatNumber(q);
                     html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge">${formatted}</span></div>`;
-                    resultItems.push({ divisor: d, status: 'ok' });
                 } else {
                     html += `<div class="result-item"><span class="divisor-val">${d}</span><span class="result-badge reject">❌ >3 знаков (${dec})</span></div>`;
-                    resultItems.push({ divisor: d, status: 'too_many' });
                 }
             }
             if (html === '') html = '<div style="padding:36px;text-align:center;">Нет результатов</div>';
             resultsContainer.innerHTML = html;
-            saveToHistory(dividend, divs, resultItems);
+            
+            // Запускаем отложенное сохранение в историю
+            scheduleHistorySave();
         }
         
-        // ---------- История ----------
+        // История (localStorage)
         function loadHistoryFromStorage() {
             const stored = localStorage.getItem('divisionHistoryApp');
             if (stored) {
@@ -501,19 +553,6 @@
         
         function saveHistoryToStorage() {
             localStorage.setItem('divisionHistoryApp', JSON.stringify(historyArray.slice(0, 20)));
-        }
-        
-        function saveToHistory(dividend, divisors, results) {
-            const newItem = {
-                dividend: dividend,
-                divisors: [...divisors],
-                results: results.map(r => r.status),
-                timestamp: Date.now()
-            };
-            historyArray.unshift(newItem);
-            if (historyArray.length > 20) historyArray.pop();
-            saveHistoryToStorage();
-            renderHistory();
         }
         
         function renderHistory() {
@@ -543,6 +582,9 @@
                         dividendInput.value = item.dividend;
                         divisorValues = [...item.divisors];
                         renderDivisorsList();
+                        // При восстановлении сбрасываем таймер и сохраняем состояние (как последнее сохранённое)
+                        if (saveTimer) clearTimeout(saveTimer);
+                        lastSavedState = { dividend: item.dividend, divisors: [...item.divisors] };
                         updateResults();
                         closeMenu();
                     }
@@ -555,10 +597,11 @@
                 historyArray = [];
                 saveHistoryToStorage();
                 renderHistory();
+                lastSavedState = null;
             }
         }
         
-        // ---------- Рендер списка делителей ----------
+        // Рендер списка делителей
         function renderDivisorsList() {
             divisorsContainer.innerHTML = '';
             divisorValues.forEach((val, idx) => {
@@ -580,16 +623,17 @@
                 delBtn.className = 'remove-div';
                 delBtn.textContent = '✕';
                 
-                input.addEventListener('input', (function(index) {
+                const handlerInput = (function(index) {
                     return function() {
                         let newVal = parseFloat(input.value);
                         if (!isNaN(newVal)) divisorValues[index] = newVal;
                         else divisorValues[index] = 0;
                         updateResults();
                     };
-                })(idx));
+                })(idx);
+                input.addEventListener('input', handlerInput);
                 
-                delBtn.addEventListener('click', (function(index) {
+                const handlerDel = (function(index) {
                     return function(e) {
                         e.stopPropagation();
                         if (divisorValues.length <= 1) {
@@ -600,7 +644,8 @@
                         renderDivisorsList();
                         updateResults();
                     };
-                })(idx));
+                })(idx);
+                delBtn.addEventListener('click', handlerDel);
                 
                 row.appendChild(labelSpan);
                 row.appendChild(input);
@@ -625,7 +670,7 @@
             updateResults();
         }
         
-        // ---------- Меню ----------
+        // Меню
         function openMenu() {
             sidePanel.classList.add('open');
             overlay.classList.add('active');
@@ -637,7 +682,7 @@
             document.body.style.overflow = '';
         }
         
-        // ---------- Тёмная тема ----------
+        // Тёмная тема
         const themeBtn = document.getElementById('themeToggle');
         function setTheme(theme) {
             if (theme === 'dark') {
@@ -658,12 +703,18 @@
         if (savedTheme === 'dark') setTheme('dark');
         else setTheme('light');
         
-        // ---------- Инициализация ----------
+        // Инициализация
         function init() {
             renderDivisorsList();
             loadHistoryFromStorage();
-            updateResults();
-            dividendInput.addEventListener('input', updateResults);
+            updateResults(); // при запуске не сохраняем в историю? лучше не сохранять, т.к. это начальное состояние
+            // Но чтобы избежать автосохранения при старте, обнулим lastSavedState после первого обновления
+            setTimeout(() => {
+                const state = getCurrentState();
+                if (state) lastSavedState = { dividend: state.dividend, divisors: [...state.divisors] };
+            }, 100);
+            
+            dividendInput.addEventListener('input', () => updateResults());
             addBtn.addEventListener('click', addDivisor);
             removeLastBtn.addEventListener('click', removeLastDivisor);
             clearHistoryBtn.addEventListener('click', clearHistory);
