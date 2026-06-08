@@ -42,7 +42,7 @@
             min-height: 100vh;
             transition: background 0.2s;
         }
-        /* Кнопка меню (увеличенная) */
+        /* Кнопка меню */
         .menu-btn {
             position: fixed;
             top: 20px;
@@ -83,7 +83,7 @@
             opacity: 1;
             visibility: visible;
         }
-        /* Боковая панель — стабильная ширина */
+        /* Боковая панель */
         .side-panel {
             position: fixed;
             top: 0;
@@ -139,7 +139,7 @@
             border-left: 6px solid var(--primary);
             padding-left: 16px;
         }
-        /* Список делителей — фиксированная структура */
+        /* Список делителей — строго горизонтально */
         .divisors-list {
             display: flex;
             flex-direction: column;
@@ -148,21 +148,26 @@
         }
         .divisor-row {
             display: flex;
+            flex-direction: row;
             align-items: center;
             gap: 12px;
             background: var(--panel-bg);
             border-radius: 80px;
             padding: 6px 12px 6px 20px;
             border: 1px solid var(--border);
+            flex-wrap: nowrap;
         }
         .divisor-row .label {
             font-weight: 600;
+            flex-shrink: 0;
             min-width: 95px;
             font-size: 1.1rem;
             color: var(--text-light);
+            white-space: nowrap;
         }
         .divisor-row input {
             flex: 1;
+            min-width: 0;
             padding: 12px 8px;
             font-size: 1.1rem;
             border: none;
@@ -248,7 +253,7 @@
             width: 100%;
             text-align: center;
         }
-        /* Основной контент — центрированный, но не разваливается */
+        /* Основной контент */
         .main-content {
             width: 100%;
             max-width: 900px;
@@ -339,6 +344,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             color: var(--text);
         }
+        /* Мобильная адаптация — сохраняем горизонтальность */
         @media (max-width: 600px) {
             .main-content { padding: 80px 16px 40px; }
             .big-input { font-size: 1.8rem; padding: 20px; }
@@ -348,11 +354,17 @@
             .result-badge { font-size: 1.2rem; padding: 6px 18px; }
             .side-panel { max-width: 90%; padding: 24px 16px; }
             .section-title { font-size: 1.3rem; }
-            .divisor-row .label { font-size: 0.95rem; min-width: 80px; }
-            .divisor-row input { font-size: 1rem; padding: 10px 6px; }
-            .btn-sm { font-size: 1rem; padding: 10px 14px; }
-            .remove-div { width: 44px; height: 44px; font-size: 1.2rem; }
+            .divisor-row { gap: 8px; padding: 4px 8px 4px 16px; }
+            .divisor-row .label { font-size: 0.9rem; min-width: 75px; }
+            .divisor-row input { font-size: 0.9rem; padding: 8px 4px; }
+            .btn-sm { font-size: 0.9rem; padding: 8px 12px; }
+            .remove-div { width: 40px; height: 40px; font-size: 1.1rem; }
             .clear-history { padding: 10px 16px; font-size: 0.9rem; }
+        }
+        /* Для очень узких экранов — не ломаем строку, просто уменьшаем отступы */
+        @media (max-width: 450px) {
+            .divisor-row .label { min-width: 65px; }
+            .remove-div { width: 36px; height: 36px; }
         }
     </style>
 </head>
@@ -473,7 +485,7 @@
             saveToHistory(dividend, divs, resultItems);
         }
         
-        // ---------- История (localStorage) ----------
+        // ---------- История ----------
         function loadHistoryFromStorage() {
             const stored = localStorage.getItem('divisionHistoryApp');
             if (stored) {
@@ -546,7 +558,7 @@
             }
         }
         
-        // ---------- Рендер списка делителей (стабильная структура) ----------
+        // ---------- Рендер списка делителей ----------
         function renderDivisorsList() {
             divisorsContainer.innerHTML = '';
             divisorValues.forEach((val, idx) => {
